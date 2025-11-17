@@ -36,3 +36,36 @@
 - (source Control)
 
 - tortoisGit
+
+## git commit convention
+
+(chat gpt)[https://chatgpt.com/g/g-68137a65261481918359aee65afeacd9-git-commit-assistant/c/691b1bf9-9978-8321-bbb6-1c67ce2ada91]
+
+## 명령어
+
+### merge
+- a 브랜치에서 커밋
+git add .
+git commit -m "message"
+(git push origin a)
+
+- develop 브랜치로 이동
+git checkout develop
+(git pull origin develop)
+
+- deveolp에 a 브랜치를 병합
+git merge a 
+
+(충돌 있다면...)
+(git add .)
+(git commit)
+
+(git push origin develop)
+
+(브랜치를 삭제?!?!)
+(git branch -d a)
+(git push origin --delete a)
+
+### history
+git log --graph
+
