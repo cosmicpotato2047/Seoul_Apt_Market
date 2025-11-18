@@ -2,8 +2,8 @@ import pandas as pd
 
 # 1. 엑셀 불러오기
 # 1) 엑셀 파일의 두 시트 읽기
-df1 = pd.read_excel("/data/Apt_Sale_Price.xlsx", sheet_name="2006~2015")
-df2 = pd.read_excel("/data/Apt_Sale_Price.xlsx", sheet_name="2016~2025.8")
+df1 = pd.read_excel("data/Apt_Sale_Price.xlsx", sheet_name="2006~2015")
+df2 = pd.read_excel("data/Apt_Sale_Price.xlsx", sheet_name="2016~2025.8")
 
 # 2) 두 시트 결합
 df = pd.concat([df1, df2], ignore_index=True)
