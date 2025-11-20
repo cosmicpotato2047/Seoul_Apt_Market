@@ -53,16 +53,27 @@ seasonal = res.seasonal
 cycle, trend_hp = hpfilter(values, lamb=129600)
 
 # -----------------------------
-# 2. [자동 탐색] m (Stumpy Window) - FFT 기반
+# 2. [자동 탐색] m (Stumpy Window) - FFT 기반 (위상 추출 포함)
 # -----------------------------
-# 주파수 분석 (0번 주파수는 제외)
-f, Pxx = periodogram(cycle)
-top_idx = np.argmax(Pxx[1:]) + 1  # 가장 파워가 센 주파수 인덱스
-dominant_period = 1 / f[top_idx]  # 주파수 -> 주기 변환
+N = len(cycle)
 
-# m 결정: FFT 주기와 최소 12개월 중 큰 값 선택 (너무 짧은 노이즈 방지)
-m = int(max(12, round(dominant_period)))
-print(f" >> [FFT 분석 결과] 감지된 최강 주기: {dominant_period:.1f}개월 -> 결정된 m: {m}")
+# 1. FFT를 직접 수행하여 주파수와 복소수 결과(위상 정보 포함)를 얻습니다.
+fft_result = np.fft.fft(cycle)
+freqs = np.fft.fftfreq(N)
+
+# 2. 가장 파워가 센 주파수 인덱스를 찾아 m(주기)을 결정합니다.
+Pxx = np.abs(fft_result[1:N//2])**2 # 파워 계산 (단측 스펙트럼)
+top_idx = np.argmax(Pxx) + 1 # 0번 인덱스 제외, 단측 스펙트럼이므로 +1
+
+dominant_period = 1 / freqs[top_idx] 
+m = int(max(12, round(dominant_period))) # m 결정: FFT 주기와 최소 12개월 중 큰 값 선택 (너무 짧은 노이즈 방지)
+print(f" >> [HP Cycle FFT 재분석] 감지된 순환 주기: {dominant_period:.1f}개월 -> 결정된 m: {m}")
+
+# 3. m 주기에 해당하는 FFT 성분의 인덱스를 사용하여 위상(Phase)을 추출합니다.
+# (dominant_period를 결정한 top_idx_in_full_spectrum을 사용해야 합니다.)
+# top_idx는 1부터 N/2-1 범위의 인덱스이므로, 전체 FFT 결과 배열에서 해당 인덱스를 사용합니다.
+phase_rad = np.angle(fft_result[top_idx]) 
+print(f" >> [위상 분석] 초기 위상(Phase shift): {phase_rad:.2f} rad")
 
 # -----------------------------
 # 3. [자동 계산] nperseg (Welch) - m 연동
@@ -149,8 +160,8 @@ plt.figure(figsize=(14, 8))
 # m 주기 코사인파 생성 (HP Filter 추세선을 중심으로 주기 패턴 시각화)
 # x축 데이터: 0부터 len(series)-1까지의 정수 배열
 x_data = np.arange(len(series))
-# 주기 T = m. 각 월에 대한 라디안 각도 계산 (2*pi*t/T)
-cosine_wave = np.cos(2 * np.pi * x_data / m) * cycle.std() * 0.5 # 진폭을 cycle의 표준편차에 비례하도록 조정
+# [수정] 위상차 phase_rad를 코사인 함수의 인수에 더해줍니다.
+cosine_wave = np.cos((2 * np.pi * x_data / m) + phase_rad) * cycle.std() * 0.5
 # 코사인파를 HP Filter 추세선에 더하여 시각화
 m_cycle_line = trend_hp + cosine_wave
 
