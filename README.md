@@ -193,14 +193,33 @@ https://chatgpt.com/c/68cdfdc5-9600-832e-a739-2283c1cbe469
             period=12 -> n_neighbors=12
             월별 지수 -> lamb=129600
             사건 매핑 -> contamination=0.05
-            m -> nperseq=3*m
+            nperseq=3*m
 
             m=?
             pen=?
         
-        궁금한 것들 묻기
+        궁금한 것들 묻기 : 각각의 항목들에 대해서 해결하기
+            m
+                주기 236으로 나오는 거 해결 : serial values가 아니라 cycle을 집어 넣어야 함
+                주기를 시각적으로 그래프로 표현, (시작 위상 맞추기)
+    
+            🔍 비정상성 탐지 도구별 차이점
+                | 도구 | 탐지 대상 (비정상성의 종류) | 부동산 시장에서의 해석 | 활용 목적 |
+                |---|
+                |1. $\text{IsolationForest}$ / $\text{LOF}$ (이상치)
+                |개별 데이터 포인트 ($\text{Outlier}$)
+                |해당 월의 가격 지수 값이 주변 시점과 비교해 비정상적으로 높거나 낮은 지점. ($\text{LOF}$는 국소적 밀도, $\text{IsoForest}$는 전역적 희소성 기준)
+                |단기적인 시장 과열/급랭, 데이터 오류 확인|
+                |2. $\text{Discord}$ ($\text{Stumpy}$)
+                |특정 길이 $\mathbf{m}$의 패턴 ($\text{Pattern Anomaly}$)
+                |**이전에 한 번도 관측되지 않았던 독특한 $\mathbf{m}$ 길이의 가격 변동 '흐름'**이 시작된 시점.
+                |이례적인 시장 충격 (예: $\text{2008}$년 금융 위기 발발 패턴)|
+                |3. $\text{Change Points}$ ($\text{Ruptures}$)
+                |통계적 속성의 변화 ($\text{Regime Change}$)
+                |**시장의 근본적인 규칙(평균, 변동성, 추세의 기울기)**이 영구적으로 바뀐 시점.
+                |정책 변화 ($\text{DTI}$, $\text{LTV}$ 규제 강화/완화), 제도적 전환점 (예: 기준금리 장기적 변동)|
 
-    figure로 표현 된 것들 description 프린트 되게 코드 수정
+    figure로 표현 된 것들 description 프린트 되게 코드 수정 + 보조 그래프
     /figure에 저장되게  (git ignore?)
     25개 제한 풀어
         

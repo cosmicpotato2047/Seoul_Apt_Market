@@ -136,6 +136,9 @@ change_dates = series.index[np.array(change_points[:-1]) - 1] # 마지막 포인
 
 print(f" >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: {optimal_n_bkps}개")
 
+change_dates_list = [date.strftime('%Y-%m') for date in change_dates]
+print(f" >> [Ruptures] 감지된 Change Points 발견일: {change_dates_list}")
+
 # -----------------------------
 # 6. 이상치 탐지 (고정 파라미터)
 # -----------------------------
