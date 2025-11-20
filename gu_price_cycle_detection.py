@@ -9,6 +9,7 @@ import ruptures as rpt
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 from matplotlib import rc
+import matplotlib.dates as mdates
 
 # -----------------------------
 # 0. 기본 설정
@@ -22,7 +23,7 @@ df = pd.read_csv("data/weighted_index_real.csv", parse_dates=['year_month'])
 df.set_index('year_month', inplace=True)
 
 # 분석 대상 선택 (첫 번째 구)
-gu = df['구'].unique()[4]
+gu = df['구'].unique()[0]
 series = df[df['구'] == gu]['real_price_index']
 values = series.values
 
@@ -67,7 +68,7 @@ top_idx = np.argmax(Pxx) + 1 # 0번 인덱스 제외, 단측 스펙트럼이므�
 
 dominant_period = 1 / freqs[top_idx] 
 m = int(max(12, round(dominant_period))) # m 결정: FFT 주기와 최소 12개월 중 큰 값 선택 (너무 짧은 노이즈 방지)
-print(f" >> [HP Cycle FFT 재분석] 감지된 순환 주기: {dominant_period:.1f}개월 -> 결정된 m: {m}")
+print(f" >> [HP Cycle FFT 분석] 감지된 순환 주기: {dominant_period:.1f}개월 -> 결정된 m: {m}")
 
 # 3. m 주기에 해당하는 FFT 성분의 인덱스를 사용하여 위상(Phase)을 추출합니다.
 # (dominant_period를 결정한 top_idx_in_full_spectrum을 사용해야 합니다.)
@@ -137,8 +138,11 @@ change_dates = series.index[np.array(change_points[:-1]) - 1] # 마지막 포인
 print(f" >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: {optimal_n_bkps}개")
 
 change_dates_list = [date.strftime('%Y-%m') for date in change_dates]
-print(f" >> [Ruptures] 감지된 Change Points 발견일: {change_dates_list}")
+count_cp = len(change_dates_list)
 
+print(f" >> [Ruptures] 감지된 Change Points (총 {count_cp}개):")
+for date_str in change_dates_list:
+    print(f"    - {date_str}")
 # -----------------------------
 # 6. 이상치 탐지 (고정 파라미터)
 # -----------------------------
@@ -154,11 +158,27 @@ lof = LocalOutlierFactor(n_neighbors=12)
 outliers_lof = lof.fit_predict(X)
 outlier_dates_lof = series.index[outliers_lof == -1]
 
+# 1. IsolationForest (IForest) 결과 출력
+iforest_dates_list = [date.strftime('%Y-%m') for date in outlier_dates_if]
+count_if = len(outlier_dates_if)
+print(f" >> [IsolationForest] 탐지된 이상치 (총 {count_if}개, {iforest.contamination*100:.0f}% 기준):")
+# 날짜를 줄 바꿈하여 출력
+for date_str in iforest_dates_list:
+    print(f"    - {date_str}")
+
+# 2. Local Outlier Factor (LOF) 결과 출력
+lof_dates_list = [date.strftime('%Y-%m') for date in outlier_dates_lof]
+count_lof = len(outlier_dates_lof)
+print(f" >> [LOF] 탐지된 이상치 (총 {count_lof}개, 이웃 N={lof.n_neighbors} 기준):")
+# 날짜를 줄 바꿈하여 출력
+for date_str in lof_dates_list:
+    print(f"    - {date_str}")
+
 # -----------------------------
-# 7.1. 메인 그래프 시각화 (첫 번째 독립 창)
+# Figure 1: 메인 분석 그래프
 # -----------------------------
-# 독립적인 Figure 객체 생성
-plt.figure(figsize=(14, 8)) 
+
+fig, ax = plt.subplots(figsize=(12, 6))
 
 # m 주기 코사인파 생성 (HP Filter 추세선을 중심으로 주기 패턴 시각화)
 # x축 데이터: 0부터 len(series)-1까지의 정수 배열
@@ -180,8 +200,19 @@ plt.scatter(change_dates, series.loc[change_dates], color='purple', label=f'Chan
 plt.scatter(outlier_dates_if, series.loc[outlier_dates_if], color='green', label='IsoForest (Top 5%)', marker='o', s=40, alpha=0.5)
 plt.scatter(outlier_dates_lof, series.loc[outlier_dates_lof], color='cyan', label='LOF (Local)', marker='x', s=40, alpha=0.8)
 
+# Major tick: 2년 간격
+ax.xaxis.set_major_locator(mdates.YearLocator(base=2))
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+
+# Minor grid: 1년 간격
+ax.xaxis.set_minor_locator(mdates.YearLocator())
+
+# Grid 설정
+ax.grid(True, which='major', linestyle='--', alpha=0.7)
+ax.grid(True, which='minor', linestyle=':', alpha=0.3)
+
 plt.title(f"[{gu}] 부동산 실질가격 종합 분석 (Auto-Tuned Parameters)", fontsize=16)
-plt.xlabel("Year-Month")
+plt.xlabel("Year")
 plt.ylabel("Real Price Index")
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid(True, which='both', linestyle='--', alpha=0.5)
@@ -189,31 +220,48 @@ plt.tight_layout() # 간격 조정
 
 plt.show()
 
-# # --- [그래프 2] Ruptures Elbow Method 확인 ---
-# ax[1].plot(n_bkps_candidates, costs, marker='o', linestyle='-', color='gray')
-# ax[1].axvline(optimal_n_bkps, color='red', linestyle='--', label=f'Optimal k={optimal_n_bkps}')
-# ax[1].set_title("Elbow Method: 최적의 변화점(Change Point) 개수 탐색")
-# ax[1].set_xlabel("Number of Breakpoints (k)")
-# ax[1].set_ylabel("Cost (Residual Error)")
-# ax[1].legend()
-# ax[1].grid(True, alpha=0.3)
+# -----------------------------
+# Figure 2: Elbow Method (Ruptures)
+# -----------------------------
+fig2, ax2 = plt.subplots(figsize=(10, 5))
 
+ax2.plot(n_bkps_candidates, costs, marker='o', linestyle='-', color='gray')
+ax2.axvline(optimal_n_bkps, color='red', linestyle='--',
+            label=f'Optimal k={optimal_n_bkps}')
 
-# # --- [그래프 3] FFT/Periodogram (m 주기성 근거) ---
-# # 주파수가 0인 것은 제외하고, 역수(1/x)를 취해 '개월 수'로 변환합니다.
-# periods = 1/f_cycle[1:]
-# power = Pxx_cycle[1:]
+ax2.set_title("Elbow Method: Optimal Change Point Count")
+ax2.set_xlabel("Number of Breakpoints (k)")
+ax2.set_ylabel("Cost (Residual Error)")
+ax2.legend()
+ax2.grid(True, alpha=0.3)
 
-# ax[2].plot(periods, power, color='blue', alpha=0.8)
-# # m 주기 위치에 수직선으로 강조
-# ax[2].axvline(m, color='red', linestyle='--', label=f'Detected Cycle (m={m})')
+plt.tight_layout()
+plt.show()
 
-# ax[2].set_title(f"HP Cycle 성분 FFT 분석 (가장 강한 주기 = {m}개월)", fontsize=14)
-# ax[2].set_xlabel("Period (Months)")
-# ax[2].set_ylabel("Power Spectrum Density")
-# ax[2].set_xscale('log') # 긴 주기를 보기 쉽게 X축을 로그 스케일로 설정
-# ax[2].legend()
-# ax[2].grid(True, which='both', linestyle='--', alpha=0.5)
+# -----------------------------
+# Figure 3: FFT 분석 기반 보조 그래프
+# -----------------------------
+fig3, ax3 = plt.subplots(figsize=(10, 5))
 
-# plt.tight_layout()
-# plt.show()
+# 주파수(0 제외)
+freqs_pos = freqs[1:N//2]     # 양수 쪽 스펙트럼
+power = Pxx                   # 동일 길이
+
+# 주기(개월 단위)
+periods = 1 / freqs_pos
+
+ax3.plot(periods, power, alpha=0.8)
+
+# m 주기 강조
+ax3.axvline(m, color='red', linestyle='--',
+            label=f'Detected Cycle = {m} months')
+
+ax3.set_title(f"HP Cycle FFT Analysis (Detected m = {m} months)")
+ax3.set_xlabel("Period (Months)")
+ax3.set_ylabel("Power Spectrum Density")
+ax3.set_xscale('log')      # 긴 주기 보기 좋음
+ax3.legend()
+ax3.grid(True, which='both', linestyle='--', alpha=0.5)
+
+plt.tight_layout()
+plt.show()
