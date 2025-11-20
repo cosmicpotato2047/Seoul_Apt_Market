@@ -228,6 +228,16 @@ https://chatgpt.com/c/68cdfdc5-9600-832e-a739-2283c1cbe469
 
 
 8. 전체 -> 이거는 개별 하면 쉽게 가지 않을까?
+    1) 데이터 준비
+    2) 공통요인: Dynamic Factor Model (DFM)
+    3) 분산분해(Variance decomposition)
+    4) 패널 회귀(고정효과/차분) 비교
+    5) 진단 및 검증
+        - 잔차의 자기상관: Ljung-Box, ACF/PACF
+        - 구별 잔차 분포: heteroskedasticity 검사(브리셔-페이건 등)
+        - 교차검증: 시간블록 CV (rolling window)로 예측성 평가
+        - 강건성: 다른 표준화/디트렌딩 방식으로 민감도 확인
+        - 부트스트랩: 파라미터 신뢰구간(특히 랜덤효과)은 부트스트랩으로 보완
 
 9. 동조성, 유사성 -> 이게 얼마나 걸릴지 모르겠는데...
 
