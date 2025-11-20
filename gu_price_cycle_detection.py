@@ -185,3 +185,32 @@ plt.grid(True, which='both', linestyle='--', alpha=0.5)
 plt.tight_layout() # 간격 조정
 
 plt.show()
+
+# # --- [그래프 2] Ruptures Elbow Method 확인 ---
+# ax[1].plot(n_bkps_candidates, costs, marker='o', linestyle='-', color='gray')
+# ax[1].axvline(optimal_n_bkps, color='red', linestyle='--', label=f'Optimal k={optimal_n_bkps}')
+# ax[1].set_title("Elbow Method: 최적의 변화점(Change Point) 개수 탐색")
+# ax[1].set_xlabel("Number of Breakpoints (k)")
+# ax[1].set_ylabel("Cost (Residual Error)")
+# ax[1].legend()
+# ax[1].grid(True, alpha=0.3)
+
+
+# # --- [그래프 3] FFT/Periodogram (m 주기성 근거) ---
+# # 주파수가 0인 것은 제외하고, 역수(1/x)를 취해 '개월 수'로 변환합니다.
+# periods = 1/f_cycle[1:]
+# power = Pxx_cycle[1:]
+
+# ax[2].plot(periods, power, color='blue', alpha=0.8)
+# # m 주기 위치에 수직선으로 강조
+# ax[2].axvline(m, color='red', linestyle='--', label=f'Detected Cycle (m={m})')
+
+# ax[2].set_title(f"HP Cycle 성분 FFT 분석 (가장 강한 주기 = {m}개월)", fontsize=14)
+# ax[2].set_xlabel("Period (Months)")
+# ax[2].set_ylabel("Power Spectrum Density")
+# ax[2].set_xscale('log') # 긴 주기를 보기 쉽게 X축을 로그 스케일로 설정
+# ax[2].legend()
+# ax[2].grid(True, which='both', linestyle='--', alpha=0.5)
+
+# plt.tight_layout()
+# plt.show()
