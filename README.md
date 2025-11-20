@@ -186,8 +186,6 @@ https://chatgpt.com/c/68cdfdc5-9600-832e-a739-2283c1cbe469
     - 제미나이에 개념들만 넣어서 학습
     - gpt에 코드들을 넣어서 이해
 
-**🦎 check point **
-
     figure로 나온 결과들을 가지고 코드 수정 (스케일 등등)
         파라미터 수정하고 : (코드)https://gemini.google.com/app/f7eb7124d0d76f0f
             period=12 -> n_neighbors=12
@@ -222,12 +220,11 @@ https://chatgpt.com/c/68cdfdc5-9600-832e-a739-2283c1cbe469
             IForest (contamination 기준): 전체적으로 가장 이례적인 상위 $\text{5\%}$ 시점(전체적인 관점에서 비정상)을 찾습니다.
             LOF (density 기준): 주변 12개월과 비교했을 때 갑자기 튀는 시점(국소적인 관점에서 비정상)을 찾습니다.
 
-    Welch's: FFT의 업그레이드 버전 -> 보조 그래프 할 때 다시
-
     figure로 표현 된 것들 description 프린트 되게 코드 수정 + 보조 그래프
     /figure에 저장되게  (git ignore?)
     25개 제한 풀어
-        
+
+**🦎 check point **
 
 
 8. 전체 -> 이거는 개별 하면 쉽게 가지 않을까?
