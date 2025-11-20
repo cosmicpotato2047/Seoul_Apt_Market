@@ -31,6 +31,7 @@ gu_list = df['구'].unique()
 for gu in gu_list:
     print(f"=== {gu} 분석 ===")
     series = df[df['구']==gu]['real_price_index']
+    values = series.values
 
     print(f"=== [{gu}] 데이터 기반 파라미터 자동 탐색 및 분석 시작 ===")
     # -----------------------------
@@ -203,7 +204,7 @@ for gu in gu_list:
     ax.grid(True, which='major', linestyle='--', alpha=0.7)
     ax.grid(True, which='minor', linestyle=':', alpha=0.3)
 
-    plt.title(f"[{gu}] 부동산 실질가격 종합 분석 (Auto-Tuned Parameters)", fontsize=16)
+    plt.title(f"[{gu}] 부동산 실질가격 종합 분석", fontsize=16)
     plt.xlabel("Year")
     plt.ylabel("Real Price Index")
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
