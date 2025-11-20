@@ -164,17 +164,59 @@ https://chatgpt.com/c/68cdfdc5-9600-832e-a739-2283c1cbe469
     IsolationForest / LOF → 이상치 보조 확인
     시각화: 원본, trend, cycle, discord, change points 한 그림에 매핑
 
+        STL: Seasonal-Trend decomposition using Loess
+        데이터를 추세(trend) 계절성(seasonality) 나머지(residual)로 분해
+        HP Filter: 단기적인 변동 cycle 과 장기적인 추세trend 를 분리  
+        FFT: Fast Fourier Transform
+        Welch's: FFT의 업그레이드 버전
+        Stumpy: Matrix Profile 기술, shape 비교
+        Motif 발견: 과거의 특정 패턴이 현재 또 등장했는가
+        Discord 발견: 이상 패턴을 찾아
+        Ruptures: 평균, 분산 등 통계적 속성이 급격히 변하는 구간을 찾아주는 라이브러리
+        Isolationo Forest / LOF
+
+        STL/HP: "전체적으로 상승장인데, 단기 파동만 따로 떼어보자."
+        FFT/Welch: "떼어낸 파동을 보니 정확히 14일 주기로 움직이는구나."
+        Ruptures: "그런데 3월 1일을 기점으로 평균값이 뚝 떨어져서 레짐이 바뀌었네?"
+        Stumpy: "그 와중에 4월 5일에는 전례 없는 형태의 급락 패턴이 있었어."
+        IsoForest: "통계적으로 봤을 때도 그 날은 명백한 이상치야."
+
+    - 한글 깨짐 해결
+    - 강남구로만 진행하고 나중에 제한 풀어
+    - 제미나이에 개념들만 넣어서 학습
+    - gpt에 코드들을 넣어서 이해
+
 **🦎 check point **
 
-7. 사건 매핑
+    figure로 나온 결과들을 가지고 코드 수정 (스케일 등등)
+        파라미터 수정하고 : (코드)https://gemini.google.com/app/f7eb7124d0d76f0f
+            period=12 -> n_neighbors=12
+            월별 지수 -> lamb=129600
+            사건 매핑 -> contamination=0.05
+            m -> nperseq=3*m
+
+            m=?
+            pen=?
+        
+        궁금한 것들 묻기
+
+    figure로 표현 된 것들 description 프린트 되게 코드 수정
+    /figure에 저장되게  (git ignore?)
+    25개 제한 풀어
+        
+
 
 8. 전체
 
 9. 동조성, 유사성
 
-10. 보고서, 인터랙티스 시각화
+7. 사건 매핑
 
+10. 보고서, 인터랙티브 시각화
 
+    층 column을 없앰
+    일별이나 주별이 아닌 월별로 묶음
+    평당가로 계산한 것이 아니라 전용면적마다 가중치를 부여함
 
 ## 목표와 절차
 
