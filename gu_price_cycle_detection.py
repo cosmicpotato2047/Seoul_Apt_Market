@@ -22,7 +22,7 @@ df = pd.read_csv("data/weighted_index_real.csv", parse_dates=['year_month'])
 df.set_index('year_month', inplace=True)
 
 # 분석 대상 선택 (첫 번째 구)
-gu = df['구'].unique()[0]
+gu = df['구'].unique()[4]
 series = df[df['구'] == gu]['real_price_index']
 values = series.values
 
@@ -146,10 +146,19 @@ outlier_dates_lof = series.index[outliers_lof == -1]
 # 독립적인 Figure 객체 생성
 plt.figure(figsize=(14, 8)) 
 
+# m 주기 코사인파 생성 (HP Filter 추세선을 중심으로 주기 패턴 시각화)
+# x축 데이터: 0부터 len(series)-1까지의 정수 배열
+x_data = np.arange(len(series))
+# 주기 T = m. 각 월에 대한 라디안 각도 계산 (2*pi*t/T)
+cosine_wave = np.cos(2 * np.pi * x_data / m) * cycle.std() * 0.5 # 진폭을 cycle의 표준편차에 비례하도록 조정
+# 코사인파를 HP Filter 추세선에 더하여 시각화
+m_cycle_line = trend_hp + cosine_wave
+
 # 메인 그래프 내용
 plt.plot(series, label='Original Price Index', color='black', alpha=0.6)
 plt.plot(trend, label='STL Trend (Long-term)', color='blue', linewidth=2, alpha=0.8)
 plt.plot(cycle + trend, label='HP Filter (Smoothed)', color='orange', linestyle='--', alpha=0.8)
+plt.plot(series.index, m_cycle_line, label=f'Ideal Cycle (T={m} months)', color='red', linestyle=':', linewidth=1.5, alpha=0.9) # m 주기 시각화
 
 # 이벤트 마커
 plt.scatter(discord_date, series.loc[discord_date], color='red', label=f'Discord (Stumpy m={m})', s=150, zorder=5, marker='*')
