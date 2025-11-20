@@ -10,6 +10,9 @@ from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 from matplotlib import rc
 import matplotlib.dates as mdates
+import os
+os.makedirs("figure", exist_ok=True)
+
 
 # -----------------------------
 # 0. 기본 설정
@@ -26,18 +29,6 @@ df.set_index('year_month', inplace=True)
 gu = df['구'].unique()[0]
 series = df[df['구'] == gu]['real_price_index']
 values = series.values
-
-# -----------------------------
-# # 구 리스트
-# gu_list = df['구'].unique()
-
-# # -----------------------------
-# # 2. 구별 분석 루프
-# # -----------------------------
-# for gu in gu_list:
-#   print(f"=== {gu} 분석 ===")
-#   series = df[df['구']==gu]['real_price_index']
-# -----------------------------
 
 print(f"=== [{gu}] 데이터 기반 파라미터 자동 탐색 및 분석 시작 ===")
 
@@ -217,6 +208,7 @@ plt.ylabel("Real Price Index")
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid(True, which='both', linestyle='--', alpha=0.5)
 plt.tight_layout() # 간격 조정
+fig.savefig(f"figure/{gu}_main_analysis.png", dpi=300)
 
 plt.show()
 
@@ -236,6 +228,8 @@ ax2.legend()
 ax2.grid(True, alpha=0.3)
 
 plt.tight_layout()
+fig2.savefig(f"figure/{gu}_ruptures_elbow.png", dpi=300)
+
 plt.show()
 
 # -----------------------------
@@ -264,4 +258,6 @@ ax3.legend()
 ax3.grid(True, which='both', linestyle='--', alpha=0.5)
 
 plt.tight_layout()
+fig3.savefig(f"figure/{gu}_fft_periodogram.png", dpi=300)
+
 plt.show()
