@@ -164,22 +164,4 @@ plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid(True, which='both', linestyle='--', alpha=0.5)
 plt.tight_layout() # 간격 조정
 
-# -----------------------------
-# 7.2. 보조 그래프 시각화 (두 번째 독립 창)
-# -----------------------------
-# 독립적인 Figure 객체 생성
-plt.figure(figsize=(10, 6))
-
-# 보조 그래프 내용
-plt.plot(n_bkps_candidates, costs, marker='o', linestyle='-', color='gray')
-plt.axvline(optimal_n_bkps, color='red', linestyle='--', label=f'Optimal k={optimal_n_bkps}')
-
-plt.title("Elbow Method: 최적의 변화점(Change Point) 개수 탐색")
-plt.xlabel("Number of Breakpoints (k)")
-plt.ylabel("Cost (Residual Error)")
-plt.legend()
-plt.grid(True, alpha=0.3)
-plt.tight_layout() # 간격 조정
-
-# 두 개의 Figure를 모두 보여줍니다.
 plt.show()
