@@ -69,3 +69,7 @@ git merge a
 ### history
 git log --graph
 
+### 터미널 출력을 txt로
+덮어쓰기: python gu_price_cycle_detection.py > results/구이름_analysis_results.txt
+
+내용추가: python gu_price_cycle_detection.py >> results/구이름_analysis_results.txt
