@@ -261,6 +261,15 @@ https://chatgpt.com/c/68cdfdc5-9600-832e-a739-2283c1cbe469
         DFM에서 추출한 공통요인의 주기, 추세, 계절성을 파악
         HP-filter, STL decomposition, FFT/Welch 등 활용 -->
 
+---
+나는 원래 다음 처럼 단일 구 분석 -> 패널/전체 분석 -> 동조성/권역 분석 순서대로 진행하려고 했어
+그런데 지금 패널/전체를 분석하다가 dfm이 전체를 충분히 설명하지 못한다는 결과를 얻었어.
+이제 뭘 어떻게 해야 할까? 순서나 절차를 수정해야 할까?
+
+단일 구 분석	지역별 사이클·특이점 확인	STL/HP, FFT/Welch, stumpy, ruptures, LOF/IF
+패널/전체	공통 요인 vs 고유 요인 분리	DFM / State-Space, Hierarchical Regression
+동조성/권역	사이클 동기화 확인, 권역 클러스터	DTW 거리, K-means/계층 클러스터링
+---
 
 **🦎 check point **
 
