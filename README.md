@@ -262,10 +262,6 @@ https://chatgpt.com/c/68cdfdc5-9600-832e-a739-2283c1cbe469
         HP-filter, STL decomposition, FFT/Welch 등 활용 -->
 
 ---
-나는 원래 다음 처럼 단일 구 분석 -> 패널/전체 분석 -> 동조성/권역 분석 순서대로 진행하려고 했어
-그런데 지금 패널/전체를 분석하다가 dfm이 전체를 충분히 설명하지 못한다는 결과를 얻었어.
-이제 뭘 어떻게 해야 할까? 순서나 절차를 수정해야 할까?
-
 단일 구 분석	지역별 사이클·특이점 확인	STL/HP, FFT/Welch, stumpy, ruptures, LOF/IF
 패널/전체	공통 요인 vs 고유 요인 분리	DFM / State-Space, Hierarchical Regression
 동조성/권역	사이클 동기화 확인, 권역 클러스터	DTW 거리, K-means/계층 클러스터링
@@ -273,14 +269,12 @@ https://chatgpt.com/c/68cdfdc5-9600-832e-a739-2283c1cbe469
 
 **🦎 check point **
 
-    동조성·상관 기반 권역 구분
-    권역별 요인 모델(DFM 등)
-    권역 단위 패널 회귀
-    권역 간 비교 분석
+동조성 / 유사도 기반 권역 클러스터
+목적: 25개 구 사이 사이클의 유사성 확인
+DTW(Time Series Dynamic Time Warping) 거리 활용
 
-    동조율과 유사성 분석 (DTW + 클러스터링)
-    각 구가 공통 요인과 얼마나 동기화되어 움직이는지 평가
-    K-means, 계층적 군집 등으로 권역별 패턴 도출
+클러스터 결과 → 권역별 동조성 패턴 확인
+시각화: 구별 클러스터 색상 표시 후 시계열 plot
 
 
 7. 사건 매핑 -> 이건 서치 하고 찾아보는 단계?
