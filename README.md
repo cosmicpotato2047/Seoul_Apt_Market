@@ -225,7 +225,7 @@ https://chatgpt.com/c/68cdfdc5-9600-832e-a739-2283c1cbe469
     25개 제한 풀어
 
 
-8. 전체 
+8. 전체/패널 분석
     1) 데이터 준비
         z-score
     2) 공통요인: Dynamic Factor Model (DFM)
@@ -246,18 +246,33 @@ https://chatgpt.com/c/68cdfdc5-9600-832e-a739-2283c1cbe469
             강건성: 데이터 전처리 방법을 바꿔봄 
         - 부트스트랩: 파라미터 신뢰구간(특히 랜덤효과)은 부트스트랩으로 보완
             부트스트랩: 파라미터 신뢰구간 확보 
+    
+    진단 및 검증 (Residual Diagnostics + Rolling CV + Robustness + Bootstrap CI)
+        패널 회귀 모델의 가정과 계수 신뢰성 확인
+        잔차 자기상관, 분포, 예측력, 표준화/디트렌딩 민감도까지 점검
+            추천 진행 순서
+                Residual Diagnostics → 모델 가정 확인
+                Bootstrap CI → 계수 안정성 확인
+                Rolling CV → 예측 성능 확인
+                Robustness Checks → 결과 강건성 확인
+            이 순서를 따르면 모델 안정성 → 신뢰성 → 예측력 → 강건성이라는 논리적 흐름이 자연스럽게 이어짐.
+    
+    <!-- Factor1 시계열 분석
+        DFM에서 추출한 공통요인의 주기, 추세, 계절성을 파악
+        HP-filter, STL decomposition, FFT/Welch 등 활용 -->
+
 
 **🦎 check point **
 
-    분산분해부터 진단 및 검증 까지 각각의 요소가
-        무슨 개념인지
-        figure로 나오는 것들이 뭐고 어떻게 해석해야 하는지
+    동조성·상관 기반 권역 구분
+    권역별 요인 모델(DFM 등)
+    권역 단위 패널 회귀
+    권역 간 비교 분석
 
-    pannel annalyze 코드랑 결과 보면서 코드 수정하기
+    동조율과 유사성 분석 (DTW + 클러스터링)
+    각 구가 공통 요인과 얼마나 동기화되어 움직이는지 평가
+    K-means, 계층적 군집 등으로 권역별 패턴 도출
 
-    동조성, 유사성으로 넘어가
-
-9. 동조성, 유사성 -> 이게 얼마나 걸릴지 모르겠는데...
 
 7. 사건 매핑 -> 이건 서치 하고 찾아보는 단계?
 

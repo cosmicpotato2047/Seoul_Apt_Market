@@ -55,43 +55,43 @@ print(f"Explained by common factors: {explained_ratio*100:.2f}%\n")
 
 idiosync_ratio = idiosync_var / total_var
 
-# # -----------------------------
-# # (1) 절대 분산 그래프
-# # -----------------------------
-# plt.figure(figsize=(6, 4))
-# plt.bar(['Common', 'Idiosync'], 
-#         [total_var * explained_ratio, idiosync_var],
-#         color=['#6bb6ff', '#ff8c8c'])
+# -----------------------------
+# (1) 절대 분산 그래프
+# -----------------------------
+plt.figure(figsize=(6, 4))
+plt.bar(['Common', 'Idiosync'], 
+        [total_var * explained_ratio, idiosync_var],
+        color=['#6bb6ff', '#ff8c8c'])
 
-# plt.ylabel('Variance')
-# plt.title('Variance Decomposition (Absolute)')
-# plt.tight_layout()
+plt.ylabel('Variance')
+plt.title('Variance Decomposition (Absolute)')
+plt.tight_layout()
 
-# plt.savefig("figure/variance_decomposition_absolute.png")
-# plt.show()
-# plt.close()
+plt.savefig("figure/variance_decomposition_absolute.png")
+plt.show()
+plt.close()
 
 
-# # -----------------------------
-# # (2) 비율(%) 그래프
-# # -----------------------------
-# plt.figure(figsize=(6, 4))
-# plt.bar(['Common', 'Idiosync'], 
-#         [explained_ratio * 100, idiosync_ratio * 100],
-#         color=['#6bb6ff', '#ff8c8c'])
+# -----------------------------
+# (2) 비율(%) 그래프
+# -----------------------------
+plt.figure(figsize=(6, 4))
+plt.bar(['Common', 'Idiosync'], 
+        [explained_ratio * 100, idiosync_ratio * 100],
+        color=['#6bb6ff', '#ff8c8c'])
 
-# plt.ylabel('Contribution (%)')
-# plt.title('Variance Contribution Ratio (%)')
+plt.ylabel('Contribution (%)')
+plt.title('Variance Contribution Ratio (%)')
 
-# for i, v in enumerate([explained_ratio * 100, idiosync_ratio * 100]):
-#     plt.text(i, v + 1, f"{v:.1f}%", ha='center')
+for i, v in enumerate([explained_ratio * 100, idiosync_ratio * 100]):
+    plt.text(i, v + 1, f"{v:.1f}%", ha='center')
 
-# plt.ylim(0, 110)
-# plt.tight_layout()
+plt.ylim(0, 110)
+plt.tight_layout()
 
-# plt.savefig("figure/variance_decomposition_ratio.png")
-# plt.show()
-# plt.close()
+plt.savefig("figure/variance_decomposition_ratio.png")
+plt.show()
+plt.close()
 
 # ======================
 # 2) Panel Regression
@@ -103,23 +103,29 @@ factor_cols = factors.columns.tolist()
 factors_reset = factors.reset_index()
 factors_reset.rename(columns={'index':'year_month'}, inplace=True)
 panel_reg = pd.merge(panel_long_reset, factors_reset, on='year_month', how='left')
+
 panel_reg.set_index(['구','year_month'], inplace=True)
+panel_reg = panel_reg.sort_index()  # MultiIndex 정렬
 
-# Random Effects Panel Regression
 y = panel_reg['real_std']
-X = panel_reg[factor_cols]
-X = sm.add_constant(X)
+X = panel_reg[factor_cols]  # 상수항 제거
 
-re_model = RandomEffects(y, X)
-re_res = re_model.fit()
-print(re_res.summary)
+# PanelOLS with entity + time effects, drop absorbed variables
+# Pass drop_absorbed=True to the PanelOLS constructor
+po_model = PanelOLS(y, X, entity_effects=True, time_effects=True, drop_absorbed=True)
+
+# Now, the .fit() method only gets covariance-related arguments
+# Note: 'cluster_entity=True' is equivalent to 'clusters=panel_reg.index.get_level_values(0)'
+po_res = po_model.fit(cov_type='clustered', cluster_entity=True)
+
+print(po_res.summary)
 
 
 # ======================
 # 3) Residual Diagnostics
 # ======================
 
-residuals = re_res.resids
+residuals = po_res.resids
 
 print("\n--- Residuals Head ---")
 print(residuals.head())
@@ -193,16 +199,17 @@ plt.savefig("figure/residual_hist_qq.png")
 plt.show()
 plt.close()
 
-# # 3-3) Ljung-Box Test
-# ljung_box = acorr_ljungbox(residuals, lags=[12,24], return_df=True)
-# print("\nLjung-Box Test for autocorrelation:")
-# print(ljung_box)
+# 3-3) Ljung-Box Test
+ljung_box = acorr_ljungbox(residuals, lags=[12,24], return_df=True)
+print("\nLjung-Box Test for autocorrelation:")
+print(ljung_box)
 
-# # 3-4) Heteroskedasticity Test
-# bp_test = het_breuschpagan(residuals, X)
-# labels = ['Lagrange multiplier stat', 'p-value', 'f-value', 'f p-value']
-# print("\nBreusch-Pagan Test for heteroskedasticity:")
-# print(dict(zip(labels, bp_test)))
+# 3-4) Heteroskedasticity Test
+X_bp = sm.add_constant(panel_reg[factor_cols])
+bp_test = het_breuschpagan(residuals, X_bp)
+labels = ['Lagrange multiplier stat', 'p-value', 'f-value', 'f p-value']
+print("\nBreusch-Pagan Test for heteroskedasticity:")
+print(dict(zip(labels, bp_test)))
 
 # # ======================
 # # 4) Bootstrap CI for Random Effects Coefficients
