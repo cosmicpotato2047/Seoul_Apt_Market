@@ -87,10 +87,12 @@ print("Final model fitted.\n")
 # 5) Extract Factors
 # ======================
 
-k = final_model.k_factors  # 학습 시 지정한 요인 수
-factors = pd.DataFrame(final_res.factors.filtered.T,  # <-- transpose
-                       index=df_wide.index,
-                       columns=[f"Factor{i+1}" for i in range(k)])
+k = final_model.k_factors
+factors = pd.DataFrame(
+    final_res.factors.filtered.T,      # (T × k)
+    index=df_wide.index,
+    columns=[f"Factor{i+1}" for i in range(k)]
+)
 factors.to_csv("data/dfm_common_factors.csv")
 
 print("Common factors saved → data/dfm_common_factors.csv")
@@ -100,12 +102,32 @@ print("Common factors saved → data/dfm_common_factors.csv")
 # 6) Extract Idiosyncratic Components
 # ======================
 
-# Factor loadings
-loadings = final_res.coefficient_matrices_var[0]  # <-- 수정
+# 0) shape
+N = df_wide.shape[1]
+k = final_model.k_factors
 
-# idiosyncratic components 계산
-idiosync = df_wide.values - np.dot(factors.values, loadings.T)
-idiosync_df = pd.DataFrame(idiosync, index=df_wide.index, columns=df_wide.columns)
+# 1) Extract raw params (Series → numpy array)
+params = np.asarray(final_res.params)
+
+# 2) loadings = first (N × k) part of params
+loadings = params[:N * k].reshape(N, k)   # (N × k)
+
+# 3) common component
+common_part = factors.values @ loadings.T   # (T × N)
+
+common_df = pd.DataFrame(
+    common_part,
+    index=df_wide.index,
+    columns=df_wide.columns
+)
+
+# 4) idiosyncratic component
+idiosync = df_wide.values - common_part
+idiosync_df = pd.DataFrame(
+    idiosync,
+    index=df_wide.index,
+    columns=df_wide.columns
+)
 idiosync_df.to_csv("data/dfm_idiosyncratic_components.csv")
 
 print("Idiosyncratic components saved → data/dfm_idiosyncratic_components.csv")
