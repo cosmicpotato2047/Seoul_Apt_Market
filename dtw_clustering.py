@@ -1,4 +1,3 @@
-# run_three_methods_ksearch_and_dendrograms.py
 import os
 import numpy as np
 import pandas as pd
@@ -194,10 +193,10 @@ print("\nAll done. Check Output/ and figure/ for results.")
 # 금천 중랑 관악 영등포
 
 # - 반복 적으로 보이는 묶음
-# 강남 서초 송파 (양천)
-# 노원 성북 도봉 (은평)
-# 강서 마포
-# 관악 중
+# 강남구 서초구 송파구 (양천구)
+# 노원구 성북구 도봉구 (은평구)
+# 강서구 마포구
+# 관악구 중구
 
 # - 개별 움직임을 반복적으로 보이는 곳
-# 종로 영등포 강북 금천 중랑 (성동) (광진) (동대문)
+# 종로구 영등포구 강북구 금천구 중랑구 (성동구) (광진구) (동대문구)
