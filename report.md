@@ -1,6 +1,41 @@
-목차 만들고 클릭시 목차로 빠르게 이동하는 기능 본문에서 제목 누르면 최 상단 목차 테이블로 이동
+# Table of Contents
+- [**1. Introduction**](#**1.-introduction**)
+- [**2. Data Description**](#**2.-data-description**)
+- [**3. Preprocessing**](#**3.-preprocessing**)
+- [**4. Methodology**](#**4.-methodology**)
+  - [**4.1. 개별 구의 가격 사이클 및 변곡점 탐지**](#**4.1.-개별-구의-가격-사이클-및-변곡점-탐지**)
+  - [**4.2. 패널 데이터 구조 구축 및 패널 회귀 분석**](#**4.2.-패널-데이터-구조-구축-및-패널-회귀-분석**)
+  - [**4.3. Dynamic Factor Model(DFM) 분석**](#**4.3.-dynamic-factor-model(dfm)-분석**)
+  - [**4.4. DTW 기반 구별 패턴 클러스터링**](#**4.4.-dtw-기반-구별-패턴-클러스터링**)
+- [**5. Results**](#**5.-results**)
+  - [**5.1 구별 Cycle Detection Results**](#**5.1-구별-cycle-detection-results**)
+  - [**5.2 Panel Regression Results**](#**5.2-panel-regression-results**)
+  - [**5.3 Dynamic Factor Model (DFM) Results**](#**5.3-dynamic-factor-model-(dfm)-results**)
+  - [**5.4 Clustering Results**](#**5.4-clustering-results**)
+- [**6. Discussion**](#**6.-discussion**)
+- [**7. Conclusion**](#**7.-conclusion**)
+- [**8. Appendix**](#**8.-appendix**)
+  - [**A. 25개 구 분석**](#**a.-25개-구-분석**)
+  - [**B. PanelOLS Full Output (Entity FE + Time FE)**](#**b.-panelols-full-output-(entity-fe-+-time-fe)**)
+
+---
 
 # **1. Introduction**
+
+최근 토지 거래 허가제 관련 뉴스가 연이어 보도되며 부동산 시장에 대한 관심이 높아지고 있다. 개인적으로도 원룸에 거주하며 언젠가는 나만의 집을 갖고 싶은 꿈이 있었다. 이러한 관심을 바탕으로, 서울시 아파트 매매 데이터를 분석하여 부동산 시장 전반의 패턴과 주기적인 사이클을 파악하고자 한다.
+
+본 연구는 서울시 25개 구별 아파트 매매 데이터를 활용하여 시장의 공통 요인과 구별 특성을 동시에 분석한다. 이를 통해 개별 구별로 반복적으로 나타나는 가격 변동 패턴과 전체 시장의 동조 현상을 확인할 수 있으며, 데이터 기반으로 부동산 사이클을 정량적으로 탐지하고자 한다.
+
+구체적으로, 본 연구의 목적은 다음과 같다.
+
+1. **시장 전체의 공통 주기 파악:** Fourier 변환과 Dynamic Factor Model(DFM)을 활용하여 전체 시장에 공통적으로 나타나는 주기적 변동을 식별한다.
+2. **개별 구별 패턴 분석:** 구별 데이터에서 DFM과 클러스터링 기법을 적용하여 지역별 차별화된 움직임을 탐지한다.
+3. **향후 정책·시장적 검토 가능성:** 데이터에서 확인된 패턴을 바탕으로, 이후 정책 발표나 외부 요인이 시장에 미치는 영향을 분석할 수 있는 기초 자료를 마련한다.
+
+이 연구는 단순히 과거 데이터를 관찰하는 것을 넘어, 서울시 아파트 시장의 구조적 이해와 향후 변동 예측을 위한 기초 자료를 제공하고자 한다.
+
+---
+[Back to Table of Contents](#table-of-contents)
 
 # **2. Data Description**
 
@@ -30,6 +65,7 @@
 다음 Column은 삭제 후 사용함 : NO, 번지, 본번, 부번, 동, 층, 매수자, 매도자, 해제사유발생일, 거래유형, 중개사소재지, 등기일자, 주택유형
 
 ---
+[Back to Table of Contents](#table-of-contents)
 
 # **3. Preprocessing**
 
@@ -343,7 +379,6 @@ price_df['real_price_index'] = price_df.apply(compute_real_price, axis=1)
 **`weighted_index_real.csv`**
 
 ---
-
 # **4. Methodology**
 
 본 프로젝트의 방법론은 총 네 단계로 구성된다:
@@ -357,6 +392,8 @@ price_df['real_price_index'] = price_df.apply(compute_real_price, axis=1)
 마지막으로 공통요인을 도출하고 클러스터링으로 패턴을 분류하는 방식이다.
 
 ---
+[Back to Table of Contents](#table-of-contents)
+
 ## **4.1. 개별 구의 가격 사이클 및 변곡점 탐지**
 
 ### **(1) 목적**
@@ -490,6 +527,7 @@ outlier_dates_lof = series.index[lof.fit_predict(X) == -1]
 ```
 
 ---
+[Back to Table of Contents](#table-of-contents)
 
 ## **4.2. 패널 데이터 구조 구축 및 패널 회귀 분석**
 
@@ -650,6 +688,7 @@ Breusch–Pagan 테스트 결과 p-value가 매우 작아(≈ 8e-80)
 따라서 이후 분석은 DFM → 구별 패턴 분해 → DTW 기반 클러스터링으로 진행했다.
 
 ---
+[Back to Table of Contents](#table-of-contents)
 
 ## **4.3. Dynamic Factor Model(DFM) 분석**
 
@@ -830,6 +869,7 @@ change_dates = series.index[np.array(change_points[:-1]) - 1]
 * idiosyncratic component를 통해 지역별 고유 패턴을 명확히 분리할 수 있게 됨
 
 ---
+[Back to Table of Contents](#table-of-contents)
 
 ## **4.4. DTW 기반 구별 패턴 클러스터링**
 
@@ -888,9 +928,9 @@ $$
 
 클러스터 구조는 계층적 클러스터링(average linkage)을 사용하였다.
 
-[
+$$
 Z = \text{linkage}(D_{\text{DTW}},\ \mathrm{method}="average")
-]
+$$
 
 k=2~9까지 반복하며 실루엣 점수(silhouette score)를 계산하여
 **최적 클러스터 개수(best k)** 를 선택하였다.
@@ -1032,9 +1072,11 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
 
 # **5. Results**
 
+[Back to Table of Contents](#table-of-contents)
+
 ## **5.1 구별 Cycle Detection Results**
 
-### **(1) 공통 구성 요소
+### **(1) 공통 구성 요소**
 
 모든 25개 구는 다음 세 종류의 시각자료를 생성하였다.
 본문에는 해석 방법을 한 번만 제시하고, 세 구(강남구·노원구·종로구)의 예시만 싣고 나머지는 Appendix로 배치한다.
@@ -1242,6 +1284,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
   **짧은 사이클 + 특정 시기 급등락**이 다른 구보다 더 빈번하게 나타나는 구조를 보인다.
 
 ---
+[Back to Table of Contents](#table-of-contents)
 
 ## **5.2 Panel Regression Results**
 
@@ -1394,59 +1437,270 @@ ACF·PACF 모두 **lag 1–5 구간에서 높은 자기상관(0.40→0.18)**이 
 → **본격적 공통 요인 분석은 Dynamic Factor Model(DFM)이 최적의 선택지임을 확인한다.**
 
 ---
+[Back to Table of Contents](#table-of-contents)
+
+## **5.3 Dynamic Factor Model (DFM) Results**
+
+### **(1) 공통 요인(Factor1) 시계열 구조**
+
+공통 요인은 25개 구의 가격지수에서 추출한 1차 공통 성분으로, 전체 시장에 공통적으로 작용하는 순환적·구조적 변동을 반영한다.
+
+* 시계열 본형: **figure/common_factor_main.png**
+![common_factor_main.png](figure/common_factor_main.png)
+  * 원본 Factor1
+  * STL 추세
+  * HP Filter 추세
+  * HP 기반 순환(cycle)
+  * 검출된 변화점 표시
+
+---
+
+### **(2) 순환 주기 분석 (FFT / Welch)**
+
+* **FFT 기반 추정 주기:** **47.2개월**
+* FFT에서 도출된 지배적 피크를 기반으로 설정된 cycle window: **m = 47**
+* Welch smoothing parameter: **nperseg = 141**
+
+* 그림: **figure/common_factor_fft.png**
+![common_factor_fft.png](figure/common_factor_fft.png)
+
+**해석**
+47개월(약 4년) 전후의 반복적 흐름은 서울 전체 시장에서 관찰되는 중기 사이클과 일치하며,
+개별 구 분석에서 도출된 **50~80개월 수준의 장기 순환**보다 짧은 주기를 보인다.
+이는 공통 요인이 여러 구의 국지적 패턴을 평균화하면서 **더 빠르고 규칙적인 중간 주기**를 추출했기 때문이다.
+
+---
+
+### **(3) Change Point Detection 결과**
+
+DFM 공통 요인에서 구조적 전환점으로 감지된 변화점은 총 **4개**이며, 다음과 같다:
+
+1. **2008-01**
+2. **2016-05**
+3. **2018-06**
+4. **2020-07**
+
+---
+
+### **(4) 요약**
+
+* 공통 요인은 **47개월** 전후의 뚜렷한 중기적 순환성을 가진다.
+* 변화점은 총 **4회**.
+* 이 결과는 패널 회귀와 달리, 시장 전반의 **동시적 충격과 순환 구조**를 한 축으로 정리함.
+
+---
+[Back to Table of Contents](#table-of-contents)
+
+## **5.4 Clustering Results**
+
+25개 구의 시계열 패턴을 군집화하기 위해 세 가지 입력 형태(HP-filtered cycle, Idiosyncratic component, Panel-based normalized series)를 각각 사용하여 계층적 군집 분석을 수행했다.
+실루엣 점수는 전반적으로 낮았으나, 시계열의 절대 레벨 차이가 크고 변동 구조가 지역별로 비동질적이기 때문에 score만으로 군집 구조를 평가하기 어렵다.
+따라서, 계층적 군집 결과를 시각적으로 확인한 뒤, 반복적 패턴을 기준으로 임의로 묶음을 구성했다.
+
+---
+
+### **(1) Hierarchical Clustering – 실루엣 기반 요약**
+
+#### **HP-filtered cycle 기준 (HP method)**
+
+**최적 k = 2**, silhouette = **0.2070**
+
+* Dendrogram: *figure/hp_dendrogram_bestk2.png*
+![figure/hp_dendrogram_bestk2.png](figure/hp_dendrogram_bestk2.png)
+
+#### **Idiosyncratic component 기준 (Idio method)**
+
+**최적 k = 2**, silhouette = **0.2077**
+
+* Dendrogram: *figure/idio_dendrogram_bestk2.png*
+![figure/idio_dendrogram_bestk2.png](figure/idio_dendrogram_bestk2.png)
+
+#### **Panel-normalized series 기준 (Panel method)**
+
+**최적 k = 2**, silhouette = **0.4672**
+
+* Dendrogram: *figure/panel_dendrogram_bestk2.png*
+![figure/panel_dendrogram_bestk2.png](figure/panel_dendrogram_bestk2.png)
+
+Panel 기반이 상대적으로 가장 높은 분리도를 보였으나, 여전히 뚜렷한 군집 구조가 존재한다고 보기는 어렵다.
+
+---
+
+### **(2) 실루엣 점수의 한계를 고려한 시각적(패턴 기반) 군집 평가**
+
+실루엣 점수는 낮지만, **도시 시계열의 구조적 이질성** 때문에 score 자체가 낮게 나오는 경향이 있다.
+그래서 군집 결과를 실제 시계열 그래프와 비교해 **반복적으로 나타나는 지역 조합(pattern)**을 다음과 같이 확인했다.
+
+#### **① HP-cycle에서 반복적으로 묶이는 지역**
+
+* **강남·용산·서초·송파·양천**
+* **성북·도봉·관악·중·강서·마포·노원·은평**
+* **구로·강동·서대문**
+
+#### **② Idiosyncratic component에서 반복되는 묶음**
+
+* **강남·서초·송파·양천**
+* **성북·노원·도봉**
+* **동작·서대문**
+* **강동·강서·은평·관악·중**
+
+#### **③ Panel-normalized series 기준**
+
+* **강남·송파·서초·강서·마포·서대문**
+* **노원·성북**
+* **강동·동대문·동작**
+* **도봉·은평**
+* **금천·중랑·관악·영등포**
+
+---
+
+### **(3) 반복적으로 등장하는 핵심 군집 구조**
+
+세 입력 방식 모두에서 **반복적으로 등장하는 조합**은 다음 네 가지였다:
+
+1. **강남·서초·송파·양천**
+2. **노원·성북·도봉·은평**
+3. **강서·마포**
+4. **관악·중**
+
+그리고 **일관되게 고유 패턴을 보인 지역**은:
+
+* **종로·영등포·강북·금천·중랑**
+
+이 영역들은 다른 지역들과의 동조성이 낮아 개별적 움직임을 보였다.
+
+---
+
+### **(4) 시각화된 군집 구조**
+
+![figure/cluster_members_and_means.png](figure/cluster_members_and_means.png)
+* 최종 군집 결과는 *figure/cluster_members_and_means.png*에 시각화되었으며,
+  각 군집 평균 시계열과 구성 구를 확인할 수 있다.
+
+![figure/cluster_explained_ratio.png](figure/cluster_explained_ratio.png)
+* 각 군집이 전체 변동을 차지하는 비율(설명력)은 figure/cluster_explained_ratio.png에 나타났다.  
+* 각 군집의 Factor1 설명력(R²)은 다음과 같이 극히 낮게 나타났다:  
+Cluster 1: 0.0001  
+Cluster 2: 0.0003  
+Cluster 3: 0.0002  
+Cluster 4: 0.0000  
+이는 각 군집의 개별 시계열 움직임이 공통 요인 Factor1과 거의 연동되지 않음을 보여준다.  
+따라서 이번 군집화는 공통 요인이 아니라 개별적·지역적 특성에 기반한 시각적 군집화임을 확인할 수 있다.
+
+![figure/cluster_welch_psd.png](figure/cluster_welch_psd.png)
+* 주기적 특징은 *figure/cluster_welch_psd.png*에서 확인 가능하다.
+
+#### **공통 요인 대비 클러스터 평균의 특징**
+
+![figure/common_vs_cluster_means.png](figure/common_vs_cluster_means.png)
+*figure/common_vs_cluster_means.png*에서 볼 수 있듯,
+
+* 공통 요인(Factor1)은 요동이 크고 장·중기 변동을 강하게 반영하는 반면,
+* 각 군집 평균은 절대 레벨이 제거되어 0 주변에 위치한다.
+  즉, 시각적 군집화는 **형태적 유사성 기반**으로 수행되었다.
+
+---
+
+#### **(5) 공간적 군집(Spatial Mapping)**
+
+* 서울시 경계 파일은 아래 경로의 SHP 데이터를 다운받아 직접 전처리했다.
+
+  * SHP 다운로드: [대한민국 최신 행정구역(SHP) 다운로드](http://www.gisdeveloper.co.kr/?p=2332)
+  * 전처리 스크립트: `prepare_seoul_shapefile.py`
+  * 사용 파일: `data/SEOUL_SIG.shp`
+* 최종 공간 군집도: *figure/cluster_map.png*
+
+![figure/cluster_map.png](figure/cluster_map.png)
+  * 각 군집이 서울 내에서 어떻게 분포하는지 시각화함
 
 
+---
 
+#### **요약**
 
+* 실루엣 기준 "통계적" 군집 구조는 약했으나,
+  **세 방식 모두에서 반복적으로 나타나는 지역 조합**이 분명히 존재했다.
+* 시각적 군집화는 장·중기 변동을 고려한 형태 기반 분류로서,
+  **동질적 발달 지역 vs 비동조 지역** 구조를 명확히 보여준다.
 
+---
+[Back to Table of Contents](#table-of-contents)
 
+# **6. Discussion**
 
+## **6.1 Synthesis of Findings**
 
+이번 연구에서는 **서울 25개 구의 주택 가격 시계열**을 대상으로 주기 탐지, 공통 요인 분석(DFM), 군집화 분석을 수행하였다.
 
+1. **Cycle Detection**
 
+   * 개별 구별 주기 분석에서는 약 29~118개월 범위의 반복 주기가 확인되었으며, 일부 구는 단일 주기보다 복수 주기가 혼합된 패턴을 보였다.
 
+2. **Dynamic Factor Model (DFM)**
 
+   * 전체 시장에 대한 1차 공통 요인(Factor1)은 47.2개월 주기를 갖고 있었으며, 주요 변화점은 2008-01, 2016-05, 2018-06, 2020-07에 발생.
+   * 공통 요인은 전체 변동의 상당 부분을 설명했으나, 구별 개별 시계열의 세부 움직임까지 선형적으로 설명하지 못함(R² 극히 낮음).
 
+3. **Clustering**
 
+   * Hierarchical clustering 후 시각적 판단으로 4개의 군집으로 분류.
+   * 반복적으로 관찰되는 구 묶음: 강남/서초/송파/양천, 노원/성북/도봉/은평, 강서/마포, 관악/중.
+   * 각 군집의 Factor1 설명력(R²)은 0.0000~0.0003으로 매우 낮아, 공통 요인보다는 **지역적·개별적 패턴**이 지배적임을 확인.
 
+**통합 요약**: 공통 요인(Factor1)은 전체 시장 주기의 큰 흐름을 포착하지만, 개별 구별 특성과 군집화 패턴은 이를 반영하지 못하며, 반복적으로 나타나는 특정 구 묶음은 지역적 특성이 강함을 보여준다.
 
+---
 
+## **6.2 Implications**
 
+1. **정량적/정성적 의미**
 
+   * 패널 회귀 분석에서는 시간 고정효과와 공통 요인의 중복으로 회귀계수가 비정상적이고 유의미하지 않음.
+   * DFM을 통해 공통 요인을 추출하면 전체 시장의 주기적 흐름을 이해할 수 있으나, 세부 개별 구 차원에서는 한계 존재.
+   * 군집화 결과 반복되는 구 묶음은 특정 지역이 유사한 시장 반응을 보임을 시사.
 
+2. **정책적/시장적 시사점**
 
+   * 공통 요인 기반 정책 대응보다는, **지역별 맞춤형 접근**이 유효함.
+   * 반복적으로 묶이는 구는 시장 조정, 공급·수요 변화, 개발 정책 등의 영향을 공유할 가능성이 높음.
 
+---
 
+## **6.3 Limitations**
 
+* DFM은 선형 모형이므로 비선형적 관계나 시차 구조를 완전히 반영하지 못함.
+* 군집화는 시각적 판단 기반으로, 완전한 정량적 기준이 아님.
+* 시계열 길이가 상대적으로 짧거나 변동성이 높은 구에서는 주기 및 요인 추출 정확도가 낮을 수 있음.
+* 패널 회귀 분석의 제한으로, 공통 요인과 개별 구 차원의 상관성 검증에 한계 존재.
 
+---
+[Back to Table of Contents](#table-of-contents)
 
+# **7. Conclusion**
 
+## **7.1 무엇을 했는가**
 
+서울 25개 구 주택 가격 시계열을 대상으로 **주기 탐지, 공통 요인 분석(DFM), 군집화**를 수행하였다.
 
+## **7.2 무엇을 발견했는가**
 
+* 전체 시장에는 29.5~118 개월 범위의 주기가 존재하며, DFM으로 추출한 1차 공통 요인은 47.2 개월의 주기를 가짐.
+* 개별 구별 패턴은 공통 요인과 거의 연동되지 않으며, 반복적으로 묶이는 구들은 지역적 특성을 공유.
+* 패널 회귀 모형은 공통 요인을 정량적으로 설명하기에는 부적합.
 
+## **7.3 무엇을 할 수 있는가**
 
+- 정책 이벤트 매핑: 부동산 관련 정책(재건축, 재개발, LTV/DTI 규제 등), 금리 변경, 대출 이자율 변동일을 시계열 변화점과 겹쳐서 시각화하면 공통 요인 및 개별 구 패턴과 정책 효과를 비교 가능.
 
+- 외생 변수 회귀: 금리, 주택담보대출 이자율, 공급량, 인구 이동 등을 외생 변수로 추가해 DFM 또는 패널 회귀 모형에서 설명력 향상 가능.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+---
 
 # **8. Appendix**
 
-## A. 25개 구 분석
+[Back to Table of Contents](#table-of-contents)
+
+## **A. 25개 구 분석**
 
 ### 1. 강남구
 - FFT Periodogram: figure/강남구_fft_periodogram.png
@@ -2569,8 +2823,9 @@ ACF·PACF 모두 **lag 1–5 구간에서 높은 자기상관(0.40→0.18)**이 
     - 2025-01
 
 ---
+[Back to Table of Contents](#table-of-contents)
 
-## B. PanelOLS Full Output (Entity FE + Time FE)**
+## **B. PanelOLS Full Output (Entity FE + Time FE)**
 
 본 절은 본문에서 요약하여 제시한 PanelOLS 추정 결과의 **전체 전문 출력**을 포함한다.
 모델은 **Entity Fixed Effects + Time Fixed Effects**, 공분산 추정은 **Clustered** 옵션을 사용하였다.
