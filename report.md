@@ -27,7 +27,7 @@
 | 건축년도       | 준공년도                   |
 | 도로명        | 도로명 주소 정보              |
 
-다음 Column은 삭제: NO, 번지, 본번, 부번, 동, 층, 매수자, 매도자, 해제사유발생일, 거래유형, 중개사소재지, 등기일자, 주택유형
+다음 Column은 삭제 후 사용함 : NO, 번지, 본번, 부번, 동, 층, 매수자, 매도자, 해제사유발생일, 거래유형, 중개사소재지, 등기일자, 주택유형
 
 ---
 
@@ -35,13 +35,8 @@
 
 ## **3.1. 두 시트 결합 및 날짜 생성**
 
-엑셀 파일의 두 시트(2006~2015, 2016~2025.8)를 하나의 DataFrame으로 통합한 후,
-`계약년월`과 `계약일` 정보를 기반으로 단일 날짜 변수(`date`)를 생성하였다.
-
 원본 데이터는 계약년월이 `YYYYMM`, 계약일이 `DD` 형태로 분리되어 있으며,
 두 값을 문자열로 변환한 뒤 `"YYYYMMDD"` 형태로 합쳐 날짜로 파싱하였다.
-날짜 변환이 불가능한 경우는 자연스럽게 `NaT`로 처리되며,
-해당 행은 분석에서 제외하였다.
 
 ```python
 df['date'] = pd.to_datetime(
@@ -284,9 +279,9 @@ monthly_grouped['count'] = df.groupby(
 
 각 월·구 단위에서 다음 공식을 사용했다.
 
-[
+$$
 Index_{t, gu}=\frac{\sum_{i} (MedianPrice_{i} \times Count_{i})}{\sum_{i} Count_{i}}
-]
+$$
 
 코드 구현:
 
@@ -329,9 +324,9 @@ cpi_df = cpi_df.astype(float)
 
 명목 지수를 CPI로 나누어 실질 지수로 변환:
 
-[
+$$
 RealIndex_{t} = \frac{NominalIndex_{t}}{CPI_{t}} \times 100
-]
+$$
 
 ### **(3) 코드 구현**
 
@@ -347,27 +342,19 @@ price_df['real_price_index'] = price_df.apply(compute_real_price, axis=1)
 출력 파일:
 **`weighted_index_real.csv`**
 
-이 파일은 이후
-
-* Dynamic Factor Model (DFM)
-* 구별 사이클 추정
-* DTW 기반 군집 분석
-* Panel 분석
-
-등 모든 분석 기법에서 사용되는 **최종 시계열 기준 가격지수**가 된다.
-
 ---
 
 # **4. Methodology**
 
-본 연구의 방법론은 총 네 단계로 구성된다:
-① 개별 구 단위의 가격 사이클 탐지,
-② 패널 데이터 구조 구축 및 패널 회귀 시도,
-③ Dynamic Factor Model(DFM)을 통한 공통요인 추출,
-④ 시계열 간 유사도 기반 클러스터링(DTW)이다.
+본 프로젝트의 방법론은 총 네 단계로 구성된다:
+- ① 개별 구 단위의 가격 사이클 탐지,
+- ② 패널 데이터 구조 구축 및 패널 회귀 시도,
+- ③ Dynamic Factor Model(DFM)을 통한 공통요인 추출,
+- ④ 시계열 간 유사도 기반 클러스터링(DTW)이다.
 
-이 순서는 **단계적으로 더 높은 구조를 포착하는 방향**으로 설계되었다.
-먼저 지역별 고유 패턴을 파악하고, 이후 이를 패널 구조로 통합해 설명가능성을 평가하며, 마지막으로 공통요인을 도출하고 클러스터링으로 패턴을 분류하는 방식이다.
+이 순서는 **단계적으로 더 높은 구조를 포착하는 방향**으로 설계되었다.  
+먼저 지역별 고유 패턴을 파악하고, 이후 이를 패널 구조로 통합해 설명가능성을 평가하며,  
+마지막으로 공통요인을 도출하고 클러스터링으로 패턴을 분류하는 방식이다.
 
 ---
 ## **4.1. 개별 구의 가격 사이클 및 변곡점 탐지**
@@ -718,9 +705,6 @@ results.append((k, p, res.aic, res.bic))
 * **k = 1 (공통 요인 1개)**
 * **p = 2 (factor AR order 2)**
 
-
-이는 전체 주택시장 움직임이 단일 주기 구조로 충분히 설명된다는 경험적 결과에 부합한다.
-
 ---
 
 ### **(3) 공통 요인 추출 (`dfm_common_factor_cycle.py`)**
@@ -876,9 +860,9 @@ change_dates = series.index[np.array(change_points[:-1]) - 1]
 각 구의 시계열 수준 차이(평균, 분산)가 클러스터링에 과도하게 영향을 주지 않도록,
 **중앙값(median)과 IQR 기반 스케일링**을 적용하였다.
 
-[
+$$
 x' = \frac{x - \tilde{x}}{\mathrm{IQR}(x)}
-]
+$$
 
 이 처리는 강남·송파처럼 가격 수준이 높은 지역과 금천·중랑처럼 낮은 지역 간의 스케일 차이를 제거하여 **형태(pattern)만 비교**할 수 있게 한다.
 
@@ -997,8 +981,6 @@ for mname, D in methods.items():
 패널 원시 시계열 기준의 DTW 구조는
 상승·하락의 **전체 흐름이 유사한 지역군**을 묶는다.
 
-예)
-
 * “강남–서초–송파–강서–마포–서대문” 군
 * “노원–성북” 군
 * “강동–동대문–동작” 군 등
@@ -1013,8 +995,6 @@ for mname, D in methods.items():
 DFM 특이성분은 각 구의 **고유 충격·단기 모멘텀**을 반영하므로
 클러스터는 더 “지역적 특성”에 가까워진다.
 
-예)
-
 * 강남·서초·송파·양천처럼 **동조적 단기 모멘텀**
 * 노원·도봉·성북 등 **북부권 단기 변동 그룹**
 
@@ -1028,8 +1008,6 @@ DFM 특이성분은 각 구의 **고유 충격·단기 모멘텀**을 반영하�
 HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 때문에
 단기 상승/하락의 타이밍이 비슷한 지역군을 잘 드러낸다.
 
-예)
-
 * 강남·서초·송파·양천
 * 노원·도봉·성북·은평
 * 강서·마포
@@ -1042,15 +1020,1376 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
 
 세 기준에서 반복적으로 나타나는 핵심 패턴:
 
-* **강남·서초·송파(양천 포함)**
-  → 동조성이 가장 높은 대표적 고가권 클러스터
-* **노원·성북·도봉(은평 포함)**
-  → 북부권 특유의 동행성과 모멘텀 패턴
+* **강남·서초·송파·양천**
+* **노원·성북·도봉·은평**
 * **강서·마포**
-  → 서부권 빠른 순환 구조
 * 일부 구는 일관적으로 **단독 행동**을 보임
   (종로, 영등포, 강북, 금천 등)
 
 이 결과는 **구간별, 가격대별 시장 구조적 동조성**을 보여주는 근거가 되며
 이후 상위 분석(변화점 분석, 시계열 segmentation 등)에도 활용 가능하다.
 
+---
+
+# **5. Results**
+
+## **5.1 구별 Cycle Detection Results**
+
+### **(1) 공통 구성 요소
+
+모든 25개 구는 다음 세 종류의 시각자료를 생성하였다.
+본문에는 해석 방법을 한 번만 제시하고, 세 구(강남구·노원구·종로구)의 예시만 싣고 나머지는 Appendix로 배치한다.
+
+#### (a) FFT 기반 Periodogram (*_fft_periodogram.png)
+
+- 월간 가격지수에 대해 Welch/FFT 기반의 주기 스펙트럼을 계산
+- 가장 강한 peak의 주기 m 검출
+- 이 값은 HP-filter cycle 및 Stumpy Discord 분석에 사용되는 핵심 파라미터가 된다
+
+#### (b) Main Analysis Figure (*_main_analysis.png)
+
+하나의 그림 안에 다음 요소가 함께 표시된다:
+
+| 항목 |	의미 |
+|--|--|
+|Original Price Index	| 실제 가격 흐름|
+|STL Trend (Long-term) | 장기 추세 분해|
+|HP Filter Cycle	| HP-filter로 추출된 순환 성분|
+|Ideal Cycle (m months)	| FFT로 검출된 주기 m으로 구성한 이상적인 기준 사이클|
+|Discord (Stumpy)	| 비정상 패턴(이상 국면) 탐지 결과|
+|Change Points (Ruptures, k)	| 구조적 변화점|
+|Isolation Forest	| 전역적 이상치(상·하위 5%)|
+|LOF(Local Outlier Factor)	| 근접 기반 국지적 이상치|
+
+#### (c) Ruptures Elbow Plot (*_ruptures_elbow.png)
+
+- 변화점 개수 k 선택 과정 시각화
+- 전체 차이를 가장 효율적으로 설명하는 k를 elbow rule로 결정
+
+---
+
+### **(2) 강남구 분석 결과**
+
+좋아요. 강남구만 Results에 넣을 수준으로 **사진 경로와 분석 내용을 정리한 템플릿**을 만들어 드리겠습니다.
+
+#### **(a) 주요 시각자료**
+
+* **FFT Periodogram:** `figure/강남구_fft_periodogram.png`
+![FFT Periodogram – 강남구](figure/강남구_fft_periodogram.png)
+
+* **Main Analysis:** `figure/강남구_main_analysis.png`
+![Main Analysis – 강남구](figure/강남구_main_analysis.png)
+
+* **Ruptures Elbow Plot:** `figure/강남구_ruptures_elbow.png`
+![Ruptures Elbow – 강남구](figure/강남구_ruptures_elbow.png)
+
+#### **(b) 주기 검출**
+
+* FFT Periodogram 최강 peak → **m = 118개월**
+  (HP Cycle FFT 분석에서 감지된 118.0개월)
+
+#### **(c) 변곡·이상 신호**
+
+##### **Stumpy Discord**
+
+* **2006-07**
+
+##### **Ruptures 변화점(k=5)**
+
+* 2007-08
+* 2016-05
+* 2017-08
+* 2019-04
+* 2024-09
+
+##### **IsolationForest (12개)**
+
+2006-01, 2006-02, 2007-03, 2007-04, 2007-05,
+2017-07, 2017-10,
+2021-12, 2022-08,
+2024-12, 2025-04, 2025-06
+
+##### **LOF(Local, 15개)**
+
+2006-01, 2006-02, 2006-05, 2006-06,
+2007-01, 2007-02, 2007-03, 2007-04, 2007-05,
+2009-06,
+2016-05, 2016-07, 2016-10,
+2022-08,
+2025-04
+
+#### **(d) 해석 요약**
+
+* **118개월(약 9.8년)**의 장기 순환 주기가 주요 주기임.
+* 변화점과 이상치가 **2006–2007, 2016–2017, 2021–2025** 구간에 집중됨.
+* 특히 **HP Cycle, STL Trend, HP Filter, Discord, LOF/IF 이상치, Ruptures 변화점**이 서로 겹치는 구간은
+  강남구 부동산 시장의 구조적 변동이 발생한 시점으로 해석 가능.
+* 장기 사이클이 뚜렷하여 **상승기/조정기 구간을 장기간 관찰 가능**,
+  단기 이상치는 특정 월(예: 2006-01, 2025-04)에서 국소적 변동을 포착함.
+
+---
+
+### **(3) 노원구 분석 결과**
+
+#### **(a) 주요 시각자료**
+
+* **FFT Periodogram:** `figure/노원구_fft_periodogram.png`
+![FFT Periodogram – 노원구](figure/노원구_fft_periodogram.png)
+
+* **Main Analysis:** `figure/노원구_main_analysis.png`
+![Main Analysis – 노원구](figure/노원구_main_analysis.png)
+
+* **Ruptures Elbow Plot:** `figure/노원구_ruptures_elbow.png`
+![Ruptures Elbow – 노원구](figure/노원구_ruptures_elbow.png)
+
+#### **(b) 주기 검출**
+
+* FFT Periodogram 최강 peak → **m = 79개월**
+  (감지된 값 78.7개월을 기반으로 반올림)
+
+#### **(c) 변곡·이상 신호**
+
+##### **Stumpy Discord**
+
+* **2009-04**
+
+##### **Ruptures 변화점(k=6)**
+
+* 2007-08
+* 2011-05
+* 2016-10
+* 2019-04
+* 2020-07
+* 2022-08
+
+##### **IsolationForest (12개)**
+
+2006-01, 2006-07,
+2021-02, 2021-06, 2021-07, 2021-08, 2021-09, 2021-10, 2021-11,
+2022-01, 2022-02, 2022-04
+
+##### **LOF(Local, 6개)**
+
+* 2012-06
+* 2012-10
+* 2018-07
+* 2019-02
+* 2021-06
+* 2021-09
+
+#### **(d) 해석 요약**
+
+* **79개월(6.5년)** 내외의 중장기 순환 주기가 가장 강하게 나타난다.
+* **2011–2012**, **2016–2017**, **2019–2022** 시기에 구조적 변화와 이상치가 밀집하며,
+  **STL Trend**, **HP Cycle**, **LOF/IF 이상치**, **Ruptures 변화점**이 동일 구간을 가리킨다.
+* 2021–2022 구간에서 **전역적(IsolationForest) 이상치가 대량 발생**하며
+  상승·조정의 비정상적 패턴이 집중된 것이 특징이다.
+
+---
+
+### **(4) 종로구 분석 결과**
+
+#### **(a) 주요 시각자료**
+
+* **FFT Periodogram:** `figure/종로구_fft_periodogram.png`
+![FFT Periodogram – 종로구](figure/종로구_fft_periodogram.png)
+
+* **Main Analysis:** `figure/종로구_main_analysis.png`
+![Main Analysis – 종로구](figure/종로구_main_analysis.png)
+
+* **Ruptures Elbow Plot:** `figure/종로구_ruptures_elbow.png`
+![Ruptures Elbow – 종로구](figure/종로구_ruptures_elbow.png)
+
+#### **(b) 주기 검출**
+
+* FFT Periodogram 최강 peak → **m = 47개월**
+  (47.2개월에서 반올림)
+
+#### **(c) 변곡·이상 신호**
+
+##### **Stumpy Discord**
+
+* **2008-09**
+
+##### **Ruptures 변화점(k=6)**
+
+* 2008-06
+* 2016-10
+* 2019-04
+* 2020-07
+* 2021-05
+* 2023-01
+
+##### **IsolationForest (12개)**
+
+2006-08,
+2022-07, 2022-08, 2022-10, 2022-11,
+2023-06, 2023-08,
+2025-02, 2025-03, 2025-05, 2025-06, 2025-07
+
+##### **LOF(Local, 10개)**
+
+2006-08,
+2022-07, 2022-08, 2022-10, 2022-11,
+2023-08,
+2025-02, 2025-03, 2025-05, 2025-06
+
+#### **(d) 해석 요약**
+
+* **47개월(약 4년)** 수준의 비교적 짧은 순환 주기가 뚜렷하게 나타난다.
+* 변화점과 이상치가 **2016–2023년 구간에 집중**되며,
+  특히 **2022–2023년 국면에서 LOF·IsolationForest·Ruptures가 동시에 활성화**된다.
+* 종로구는 업무·상업 중심지 특성으로 인해
+  **짧은 사이클 + 특정 시기 급등락**이 다른 구보다 더 빈번하게 나타나는 구조를 보인다.
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# **8. Appendix**
+
+## A. 25개 구 분석
+
+### 1. 강남구
+- FFT Periodogram: figure/강남구_fft_periodogram.png
+![FFT Periodogram – 강남구](figure/강남구_fft_periodogram.png)
+- Main Analysis: figure/강남구_main_analysis.png
+![Main Analysis – 강남구](figure/강남구_main_analysis.png)
+- Ruptures Elbow: figure/강남구_ruptures_elbow.png
+![Ruptures Elbow – 강남구](figure/강남구_ruptures_elbow.png)
+
+=== 강남구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 118.0개월 -> 결정된 m: 118
+ >> [위상 분석] 초기 위상(Phase shift): -2.54 rad
+ >> [Welch 설정] nperseg: 236 (m의 2.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2006-07
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 5개
+ >> [Ruptures] 감지된 Change Points (총 5개):
+    - 2007-08
+    - 2016-05
+    - 2017-08
+    - 2019-04
+    - 2024-09
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2006-01
+    - 2006-02
+    - 2007-03
+    - 2007-04
+    - 2007-05
+    - 2017-07
+    - 2017-10
+    - 2021-12
+    - 2022-08
+    - 2024-12
+    - 2025-04
+    - 2025-06
+ >> [LOF] 탐지된 이상치 (총 15개, 이웃 N=12 기준):
+    - 2006-01
+    - 2006-02
+    - 2006-05
+    - 2006-06
+    - 2007-01
+    - 2007-02
+    - 2007-03
+    - 2007-04
+    - 2007-05
+    - 2009-06
+    - 2016-05
+    - 2016-07
+    - 2016-10
+    - 2022-08
+    - 2025-04
+
+- FFT Periodogram: figure/강동구_fft_periodogram.png
+![FFT Periodogram – 강동구](figure/강동구_fft_periodogram.png)
+- Main Analysis: figure/강동구_main_analysis.png
+![Main Analysis – 강동구](figure/강동구_main_analysis.png)
+- Ruptures Elbow: figure/강동구_ruptures_elbow.png
+![Ruptures Elbow – 강동구](figure/강동구_ruptures_elbow.png)
+
+=== 강동구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 33.7개월 -> 결정된 m: 34
+ >> [위상 분석] 초기 위상(Phase shift): -1.39 rad
+ >> [Welch 설정] nperseg: 102 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2012-07
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 3개
+ >> [Ruptures] 감지된 Change Points (총 3개):
+    - 2016-05
+    - 2019-04
+    - 2020-07
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2008-01
+    - 2014-12
+    - 2021-07
+    - 2021-09
+    - 2023-04
+    - 2023-06
+    - 2024-06
+    - 2025-02
+    - 2025-03
+    - 2025-04
+    - 2025-05
+    - 2025-06
+ >> [LOF] 탐지된 이상치 (총 8개, 이웃 N=12 기준):
+    - 2014-12
+    - 2015-03
+    - 2017-08
+    - 2021-09
+    - 2025-02
+    - 2025-03
+    - 2025-05
+    - 2025-06
+
+- FFT Periodogram: figure/강북구_fft_periodogram.png
+![FFT Periodogram – 강북구](figure/강북구_fft_periodogram.png)
+- Main Analysis: figure/강북구_main_analysis.png
+![Main Analysis – 강북구](figure/강북구_main_analysis.png)
+- Ruptures Elbow: figure/강북구_ruptures_elbow.png
+![Ruptures Elbow – 강북구](figure/강북구_ruptures_elbow.png)
+
+=== 강북구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 47.2개월 -> 결정된 m: 47
+ >> [위상 분석] 초기 위상(Phase shift): 1.22 rad
+ >> [Welch 설정] nperseg: 141 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2021-10
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 7개
+ >> [Ruptures] 감지된 Change Points (총 7개):
+    - 2007-08
+    - 2010-02
+    - 2016-05
+    - 2018-01
+    - 2019-09
+    - 2020-07
+    - 2021-10
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2006-01
+    - 2020-09
+    - 2020-12
+    - 2021-01
+    - 2021-04
+    - 2021-05
+    - 2021-06
+    - 2021-07
+    - 2021-08
+    - 2021-10
+    - 2022-01
+    - 2022-12
+ >> [LOF] 탐지된 이상치 (총 13개, 이웃 N=12 기준):
+    - 2006-01
+    - 2007-08
+    - 2010-02
+    - 2010-07
+    - 2011-09
+    - 2015-01
+    - 2016-01
+    - 2020-12
+    - 2021-07
+    - 2021-08
+    - 2021-10
+    - 2022-01
+    - 2022-12
+
+- FFT Periodogram: figure/강서구_fft_periodogram.png
+![FFT Periodogram – 강서구](figure/강서구_fft_periodogram.png)
+- Main Analysis: figure/강서구_main_analysis.png
+![Main Analysis – 강서구](figure/강서구_main_analysis.png)
+- Ruptures Elbow: figure/강서구_ruptures_elbow.png
+![Ruptures Elbow – 강서구](figure/강서구_ruptures_elbow.png)
+
+=== 강서구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 47.2개월 -> 결정된 m: 47
+ >> [위상 분석] 초기 위상(Phase shift): 1.23 rad
+ >> [Welch 설정] nperseg: 141 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2009-07
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 7개
+ >> [Ruptures] 감지된 Change Points (총 7개):
+    - 2008-06
+    - 2016-05
+    - 2017-03
+    - 2019-04
+    - 2020-07
+    - 2021-10
+    - 2023-01
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2006-06
+    - 2007-01
+    - 2007-02
+    - 2007-03
+    - 2007-04
+    - 2007-06
+    - 2007-07
+    - 2007-08
+    - 2021-06
+    - 2021-07
+    - 2021-08
+    - 2025-06
+ >> [LOF] 탐지된 이상치 (총 11개, 이웃 N=12 기준):
+    - 2006-12
+    - 2007-09
+    - 2008-03
+    - 2009-01
+    - 2009-02
+    - 2012-07
+    - 2015-09
+    - 2017-02
+    - 2019-01
+    - 2021-07
+    - 2021-08
+
+- FFT Periodogram: figure/관악구_fft_periodogram.png
+![FFT Periodogram – 관악구](figure/관악구_fft_periodogram.png)
+- Main Analysis: figure/관악구_main_analysis.png
+![Main Analysis – 관악구](figure/관악구_main_analysis.png)
+- Ruptures Elbow: figure/관악구_ruptures_elbow.png
+![Ruptures Elbow – 관악구](figure/관악구_ruptures_elbow.png)
+
+=== 관악구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 59.0개월 -> 결정된 m: 59
+ >> [위상 분석] 초기 위상(Phase shift): 0.77 rad
+ >> [Welch 설정] nperseg: 177 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2019-02
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 6개
+ >> [Ruptures] 감지된 Change Points (총 6개):
+    - 2007-03
+    - 2011-05
+    - 2015-07
+    - 2018-01
+    - 2019-04
+    - 2024-04
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2012-07
+    - 2012-08
+    - 2013-07
+    - 2020-12
+    - 2021-01
+    - 2024-07
+    - 2024-10
+    - 2025-03
+    - 2025-04
+    - 2025-05
+    - 2025-06
+    - 2025-08
+ >> [LOF] 탐지된 이상치 (총 19개, 이웃 N=12 기준):
+    - 2008-04
+    - 2008-07
+    - 2008-10
+    - 2012-07
+    - 2012-08
+    - 2013-07
+    - 2017-11
+    - 2019-07
+    - 2019-08
+    - 2020-08
+    - 2020-12
+    - 2021-01
+    - 2021-08
+    - 2024-01
+    - 2024-08
+    - 2025-03
+    - 2025-04
+    - 2025-05
+    - 2025-06
+
+- FFT Periodogram: figure/광진구_fft_periodogram.png
+![FFT Periodogram – 광진구](figure/광진구_fft_periodogram.png)
+- Main Analysis: figure/광진구_main_analysis.png
+![Main Analysis – 광진구](figure/광진구_main_analysis.png)
+- Ruptures Elbow: figure/광진구_ruptures_elbow.png
+![Ruptures Elbow – 광진구](figure/광진구_ruptures_elbow.png)
+
+=== 광진구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 118.0개월 -> 결정된 m: 118
+ >> [위상 분석] 초기 위상(Phase shift): -2.88 rad
+ >> [Welch 설정] nperseg: 236 (m의 2.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2007-04
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 4개
+ >> [Ruptures] 감지된 Change Points (총 4개):
+    - 2007-08
+    - 2017-08
+    - 2019-04
+    - 2020-02
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2007-05
+    - 2007-07
+    - 2007-08
+    - 2016-03
+    - 2021-01
+    - 2021-05
+    - 2022-03
+    - 2022-10
+    - 2022-12
+    - 2023-04
+    - 2025-05
+    - 2025-06
+ >> [LOF] 탐지된 이상치 (총 12개, 이웃 N=12 기준):
+    - 2006-01
+    - 2006-07
+    - 2006-08
+    - 2007-02
+    - 2007-03
+    - 2007-04
+    - 2007-05
+    - 2007-07
+    - 2007-08
+    - 2012-09
+    - 2016-03
+    - 2022-12
+
+- FFT Periodogram: figure/구로구_fft_periodogram.png
+![FFT Periodogram – 구로구](figure/구로구_fft_periodogram.png)
+- Main Analysis: figure/구로구_main_analysis.png
+![Main Analysis – 구로구](figure/구로구_main_analysis.png)
+- Ruptures Elbow: figure/구로구_ruptures_elbow.png
+![Ruptures Elbow – 구로구](figure/구로구_ruptures_elbow.png)
+
+=== 구로구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 47.2개월 -> 결정된 m: 47
+ >> [위상 분석] 초기 위상(Phase shift): 1.73 rad
+ >> [Welch 설정] nperseg: 141 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2019-06
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 5개
+ >> [Ruptures] 감지된 Change Points (총 5개):
+    - 2007-08
+    - 2010-02
+    - 2017-03
+    - 2019-04
+    - 2023-01
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2006-11
+    - 2007-01
+    - 2007-02
+    - 2021-05
+    - 2021-07
+    - 2021-08
+    - 2021-09
+    - 2022-02
+    - 2022-09
+    - 2023-08
+    - 2024-06
+    - 2025-06
+ >> [LOF] 탐지된 이상치 (총 9개, 이웃 N=12 기준):
+    - 2021-05
+    - 2021-07
+    - 2021-08
+    - 2021-09
+    - 2022-02
+    - 2022-09
+    - 2023-08
+    - 2024-06
+    - 2025-06
+
+- FFT Periodogram: figure/금천구_fft_periodogram.png
+![FFT Periodogram – 금천구](figure/금천구_fft_periodogram.png)
+- Main Analysis: figure/금천구_main_analysis.png
+![Main Analysis – 금천구](figure/금천구_main_analysis.png)
+- Ruptures Elbow: figure/금천구_ruptures_elbow.png
+![Ruptures Elbow – 금천구](figure/금천구_ruptures_elbow.png)
+
+=== 금천구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 47.2개월 -> 결정된 m: 47
+ >> [위상 분석] 초기 위상(Phase shift): 1.55 rad
+ >> [Welch 설정] nperseg: 141 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2020-04
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 6개
+ >> [Ruptures] 감지된 Change Points (총 6개):
+    - 2008-01
+    - 2011-05
+    - 2015-07
+    - 2018-06
+    - 2020-07
+    - 2023-01
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2006-01
+    - 2006-02
+    - 2007-03
+    - 2013-12
+    - 2019-05
+    - 2020-11
+    - 2021-02
+    - 2021-07
+    - 2021-09
+    - 2021-10
+    - 2023-08
+    - 2024-07
+ >> [LOF] 탐지된 이상치 (총 5개, 이웃 N=12 기준):
+    - 2007-03
+    - 2013-12
+    - 2021-07
+    - 2021-09
+    - 2021-10
+
+- FFT Periodogram: figure/노원구_fft_periodogram.png
+![FFT Periodogram – 노원구](figure/노원구_fft_periodogram.png)
+- Main Analysis: figure/노원구_main_analysis.png
+![Main Analysis – 노원구](figure/노원구_main_analysis.png)
+- Ruptures Elbow: figure/노원구_ruptures_elbow.png
+![Ruptures Elbow – 노원구](figure/노원구_ruptures_elbow.png)
+
+=== 노원구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 78.7개월 -> 결정된 m: 79
+ >> [위상 분석] 초기 위상(Phase shift): -2.72 rad
+ >> [Welch 설정] nperseg: 236 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2009-04
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 6개
+ >> [Ruptures] 감지된 Change Points (총 6개):
+    - 2007-08
+    - 2011-05
+    - 2016-10
+    - 2019-04
+    - 2020-07
+    - 2022-08
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2006-01
+    - 2006-07
+    - 2021-02
+    - 2021-06
+    - 2021-07
+    - 2021-08
+    - 2021-09
+    - 2021-10
+    - 2021-11
+    - 2022-01
+    - 2022-02
+    - 2022-04
+ >> [LOF] 탐지된 이상치 (총 6개, 이웃 N=12 기준):
+    - 2012-06
+    - 2012-10
+    - 2018-07
+    - 2019-02
+    - 2021-06
+    - 2021-09
+
+- FFT Periodogram: figure/도봉구_fft_periodogram.png
+![FFT Periodogram – 도봉구](figure/도봉구_fft_periodogram.png)
+- Main Analysis: figure/도봉구_main_analysis.png
+![Main Analysis – 도봉구](figure/도봉구_main_analysis.png)
+- Ruptures Elbow: figure/도봉구_ruptures_elbow.png
+![Ruptures Elbow – 도봉구](figure/도봉구_ruptures_elbow.png)
+
+=== 도봉구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 78.7개월 -> 결정된 m: 79
+ >> [위상 분석] 초기 위상(Phase shift): -2.83 rad
+ >> [Welch 설정] nperseg: 236 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2009-04
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 6개
+ >> [Ruptures] 감지된 Change Points (총 6개):
+    - 2007-08
+    - 2010-02
+    - 2017-03
+    - 2019-04
+    - 2020-07
+    - 2022-08
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2006-01
+    - 2006-05
+    - 2006-06
+    - 2006-07
+    - 2006-12
+    - 2007-01
+    - 2007-03
+    - 2021-05
+    - 2021-07
+    - 2021-08
+    - 2021-09
+    - 2021-10
+ >> [LOF] 탐지된 이상치 (총 5개, 이웃 N=12 기준):
+    - 2021-05
+    - 2021-07
+    - 2021-08
+    - 2021-09
+    - 2021-10
+
+- FFT Periodogram: figure/동대문구_fft_periodogram.png
+![FFT Periodogram – 동대문구](figure/동대문구_fft_periodogram.png)
+- Main Analysis: figure/동대문구_main_analysis.png
+![Main Analysis – 동대문구](figure/동대문구_main_analysis.png)
+- Ruptures Elbow: figure/동대문구_ruptures_elbow.png
+![Ruptures Elbow – 동대문구](figure/동대문구_ruptures_elbow.png)
+
+=== 동대문구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 47.2개월 -> 결정된 m: 47
+ >> [위상 분석] 초기 위상(Phase shift): 1.29 rad
+ >> [Welch 설정] nperseg: 141 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2021-06
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 4개
+ >> [Ruptures] 감지된 Change Points (총 4개):
+    - 2007-08
+    - 2016-05
+    - 2019-04
+    - 2020-02
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2007-02
+    - 2007-03
+    - 2007-04
+    - 2020-11
+    - 2020-12
+    - 2021-06
+    - 2021-08
+    - 2021-09
+    - 2021-10
+    - 2024-11
+    - 2025-06
+    - 2025-08
+ >> [LOF] 탐지된 이상치 (총 6개, 이웃 N=12 기준):
+    - 2007-02
+    - 2007-03
+    - 2007-04
+    - 2020-11
+    - 2020-12
+    - 2021-08
+
+- FFT Periodogram: figure/동작구_fft_periodogram.png
+![FFT Periodogram – 동작구](figure/동작구_fft_periodogram.png)
+- Main Analysis: figure/동작구_main_analysis.png
+![Main Analysis – 동작구](figure/동작구_main_analysis.png)
+- Ruptures Elbow: figure/동작구_ruptures_elbow.png
+![Ruptures Elbow – 동작구](figure/동작구_ruptures_elbow.png)
+
+=== 동작구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 47.2개월 -> 결정된 m: 47
+ >> [위상 분석] 초기 위상(Phase shift): 1.17 rad
+ >> [Welch 설정] nperseg: 141 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2011-12
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 6개
+ >> [Ruptures] 감지된 Change Points (총 6개):
+    - 2016-05
+    - 2018-01
+    - 2019-04
+    - 2020-07
+    - 2021-10
+    - 2024-04
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2006-01
+    - 2006-06
+    - 2006-07
+    - 2007-02
+    - 2007-03
+    - 2015-09
+    - 2021-01
+    - 2021-02
+    - 2021-07
+    - 2021-08
+    - 2022-06
+    - 2025-03
+ >> [LOF] 탐지된 이상치 (총 9개, 이웃 N=12 기준):
+    - 2006-01
+    - 2006-06
+    - 2006-07
+    - 2007-02
+    - 2007-03
+    - 2015-09
+    - 2021-02
+    - 2021-07
+    - 2022-06
+
+- FFT Periodogram: figure/마포구_fft_periodogram.png
+![FFT Periodogram – 마포구](figure/마포구_fft_periodogram.png)
+- Main Analysis: figure/마포구_main_analysis.png
+![Main Analysis – 마포구](figure/마포구_main_analysis.png)
+- Ruptures Elbow: figure/마포구_ruptures_elbow.png
+![Ruptures Elbow – 마포구](figure/마포구_ruptures_elbow.png)
+
+=== 마포구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 47.2개월 -> 결정된 m: 47
+ >> [위상 분석] 초기 위상(Phase shift): 1.09 rad
+ >> [Welch 설정] nperseg: 141 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2009-01
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 4개
+ >> [Ruptures] 감지된 Change Points (총 4개):
+    - 2008-01
+    - 2016-05
+    - 2019-04
+    - 2020-07
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2007-03
+    - 2007-04
+    - 2007-06
+    - 2007-08
+    - 2021-09
+    - 2021-10
+    - 2025-01
+    - 2025-02
+    - 2025-03
+    - 2025-04
+    - 2025-05
+    - 2025-06
+ >> [LOF] 탐지된 이상치 (총 10개, 이웃 N=12 기준):
+    - 2007-03
+    - 2012-08
+    - 2021-09
+    - 2021-10
+    - 2025-01
+    - 2025-02
+    - 2025-03
+    - 2025-04
+    - 2025-05
+    - 2025-06
+
+- FFT Periodogram: figure/서대문구_fft_periodogram.png
+![FFT Periodogram – 서대문구](figure/서대문구_fft_periodogram.png)
+- Main Analysis: figure/서대문구_main_analysis.png
+![Main Analysis – 서대문구](figure/서대문구_main_analysis.png)
+- Ruptures Elbow: figure/서대문구_ruptures_elbow.png
+![Ruptures Elbow – 서대문구](figure/서대문구_ruptures_elbow.png)
+
+=== 서대문구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 47.2개월 -> 결정된 m: 47
+ >> [위상 분석] 초기 위상(Phase shift): 0.94 rad
+ >> [Welch 설정] nperseg: 141 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2011-05
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 4개
+ >> [Ruptures] 감지된 Change Points (총 4개):
+    - 2015-12
+    - 2019-04
+    - 2020-07
+    - 2022-03
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2007-01
+    - 2007-05
+    - 2018-08
+    - 2020-11
+    - 2020-12
+    - 2021-01
+    - 2021-07
+    - 2021-08
+    - 2021-09
+    - 2021-11
+    - 2022-01
+    - 2025-06
+ >> [LOF] 탐지된 이상치 (총 14개, 이웃 N=12 기준):
+    - 2007-01
+    - 2007-02
+    - 2007-04
+    - 2007-05
+    - 2007-06
+    - 2013-01
+    - 2020-12
+    - 2021-01
+    - 2021-07
+    - 2021-08
+    - 2021-09
+    - 2021-11
+    - 2022-01
+    - 2025-06
+
+- FFT Periodogram: figure/서초구_fft_periodogram.png
+![FFT Periodogram – 서초구](figure/서초구_fft_periodogram.png)
+- Main Analysis: figure/서초구_main_analysis.png
+![Main Analysis – 서초구](figure/서초구_main_analysis.png)
+- Ruptures Elbow: figure/서초구_ruptures_elbow.png
+![Ruptures Elbow – 서초구](figure/서초구_ruptures_elbow.png)
+
+=== 서초구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 59.0개월 -> 결정된 m: 59
+ >> [위상 분석] 초기 위상(Phase shift): 0.60 rad
+ >> [Welch 설정] nperseg: 177 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2009-11
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 5개
+ >> [Ruptures] 감지된 Change Points (총 5개):
+    - 2008-06
+    - 2016-05
+    - 2018-01
+    - 2020-07
+    - 2024-04
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2007-03
+    - 2007-04
+    - 2007-05
+    - 2007-07
+    - 2007-08
+    - 2008-03
+    - 2008-04
+    - 2021-07
+    - 2024-06
+    - 2024-12
+    - 2025-01
+    - 2025-02
+ >> [LOF] 탐지된 이상치 (총 1개, 이웃 N=12 기준):
+    - 2025-02
+
+- FFT Periodogram: figure/성동구_fft_periodogram.png
+![FFT Periodogram – 성동구](figure/성동구_fft_periodogram.png)
+- Main Analysis: figure/성동구_main_analysis.png
+![Main Analysis – 성동구](figure/성동구_main_analysis.png)
+- Ruptures Elbow: figure/성동구_ruptures_elbow.png
+![Ruptures Elbow – 성동구](figure/성동구_ruptures_elbow.png)
+
+=== 성동구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 39.3개월 -> 결정된 m: 39
+ >> [위상 분석] 초기 위상(Phase shift): 1.20 rad
+ >> [Welch 설정] nperseg: 117 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2009-11
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 5개
+ >> [Ruptures] 감지된 Change Points (총 5개):
+    - 2017-03
+    - 2018-06
+    - 2020-07
+    - 2022-08
+    - 2023-06
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2006-01
+    - 2006-02
+    - 2018-06
+    - 2021-02
+    - 2021-04
+    - 2021-05
+    - 2021-10
+    - 2021-11
+    - 2022-06
+    - 2022-09
+    - 2023-12
+    - 2025-06
+ >> [LOF] 탐지된 이상치 (총 17개, 이웃 N=12 기준):
+    - 2006-01
+    - 2006-02
+    - 2012-09
+    - 2013-06
+    - 2013-07
+    - 2021-02
+    - 2021-03
+    - 2021-04
+    - 2021-05
+    - 2021-08
+    - 2021-10
+    - 2021-11
+    - 2021-12
+    - 2022-04
+    - 2022-06
+    - 2022-09
+    - 2025-06
+
+- FFT Periodogram: figure/성북구_fft_periodogram.png
+![FFT Periodogram – 성북구](figure/성북구_fft_periodogram.png)
+- Main Analysis: figure/성북구_main_analysis.png
+![Main Analysis – 성북구](figure/성북구_main_analysis.png)
+- Ruptures Elbow: figure/성북구_ruptures_elbow.png
+![Ruptures Elbow – 성북구](figure/성북구_ruptures_elbow.png)
+
+=== 성북구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 78.7개월 -> 결정된 m: 79
+ >> [위상 분석] 초기 위상(Phase shift): -2.34 rad
+ >> [Welch 설정] nperseg: 236 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2008-11
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 5개
+ >> [Ruptures] 감지된 Change Points (총 5개):
+    - 2007-08
+    - 2015-07
+    - 2018-06
+    - 2020-02
+    - 2022-08
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2006-01
+    - 2007-03
+    - 2021-03
+    - 2021-06
+    - 2021-07
+    - 2021-08
+    - 2021-09
+    - 2021-11
+    - 2022-01
+    - 2022-03
+    - 2022-05
+    - 2022-07
+ >> [LOF] 탐지된 이상치 (총 4개, 이웃 N=12 기준):
+    - 2006-01
+    - 2021-08
+    - 2021-09
+    - 2022-03
+
+- FFT Periodogram: figure/송파구_fft_periodogram.png
+![FFT Periodogram – 송파구](figure/송파구_fft_periodogram.png)
+- Main Analysis: figure/송파구_main_analysis.png
+![Main Analysis – 송파구](figure/송파구_main_analysis.png)
+- Ruptures Elbow: figure/송파구_ruptures_elbow.png
+![Ruptures Elbow – 송파구](figure/송파구_ruptures_elbow.png)
+
+=== 송파구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 118.0개월 -> 결정된 m: 118
+ >> [위상 분석] 초기 위상(Phase shift): 2.92 rad
+ >> [Welch 설정] nperseg: 236 (m의 2.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2007-07
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 4개
+ >> [Ruptures] 감지된 Change Points (총 4개):
+    - 2008-06
+    - 2017-03
+    - 2018-11
+    - 2020-07
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2007-03
+    - 2007-04
+    - 2007-05
+    - 2007-06
+    - 2007-08
+    - 2019-01
+    - 2020-01
+    - 2020-12
+    - 2021-07
+    - 2021-09
+    - 2021-12
+    - 2022-01
+ >> [LOF] 탐지된 이상치 (총 10개, 이웃 N=12 기준):
+    - 2007-03
+    - 2007-08
+    - 2009-05
+    - 2009-12
+    - 2010-07
+    - 2018-04
+    - 2018-11
+    - 2019-01
+    - 2021-09
+    - 2022-01
+
+- FFT Periodogram: figure/양천구_fft_periodogram.png
+![FFT Periodogram – 양천구](figure/양천구_fft_periodogram.png)
+- Main Analysis: figure/양천구_main_analysis.png
+![Main Analysis – 양천구](figure/양천구_main_analysis.png)
+- Ruptures Elbow: figure/양천구_ruptures_elbow.png
+![Ruptures Elbow – 양천구](figure/양천구_ruptures_elbow.png)
+
+=== 양천구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 59.0개월 -> 결정된 m: 59
+ >> [위상 분석] 초기 위상(Phase shift): 0.78 rad
+ >> [Welch 설정] nperseg: 177 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2020-04
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 5개
+ >> [Ruptures] 감지된 Change Points (총 5개):
+    - 2008-06
+    - 2010-12
+    - 2017-03
+    - 2019-04
+    - 2023-06
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2007-03
+    - 2007-04
+    - 2007-05
+    - 2007-07
+    - 2007-08
+    - 2007-09
+    - 2020-11
+    - 2021-04
+    - 2022-06
+    - 2023-06
+    - 2023-11
+    - 2024-11
+ >> [LOF] 탐지된 이상치 (총 18개, 이웃 N=12 기준):
+    - 2006-02
+    - 2006-12
+    - 2007-04
+    - 2007-07
+    - 2007-08
+    - 2007-09
+    - 2011-09
+    - 2012-06
+    - 2013-01
+    - 2013-02
+    - 2015-01
+    - 2016-02
+    - 2020-11
+    - 2021-04
+    - 2022-06
+    - 2023-06
+    - 2023-11
+    - 2024-11
+
+- FFT Periodogram: figure/영등포구_fft_periodogram.png
+![FFT Periodogram – 영등포구](figure/영등포구_fft_periodogram.png)
+- Main Analysis: figure/영등포구_main_analysis.png
+![Main Analysis – 영등포구](figure/영등포구_main_analysis.png)
+- Ruptures Elbow: figure/영등포구_ruptures_elbow.png
+![Ruptures Elbow – 영등포구](figure/영등포구_ruptures_elbow.png)
+
+=== 영등포구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 59.0개월 -> 결정된 m: 59
+ >> [위상 분석] 초기 위상(Phase shift): 0.60 rad
+ >> [Welch 설정] nperseg: 177 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2019-07
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 6개
+ >> [Ruptures] 감지된 Change Points (총 6개):
+    - 2008-01
+    - 2011-05
+    - 2015-07
+    - 2017-08
+    - 2019-04
+    - 2024-04
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2012-02
+    - 2012-03
+    - 2013-07
+    - 2021-02
+    - 2021-04
+    - 2022-07
+    - 2022-09
+    - 2024-09
+    - 2024-10
+    - 2025-01
+    - 2025-04
+    - 2025-06
+ >> [LOF] 탐지된 이상치 (총 5개, 이웃 N=12 기준):
+    - 2012-03
+    - 2022-07
+    - 2022-09
+    - 2024-09
+    - 2025-06
+
+- FFT Periodogram: figure/용산구_fft_periodogram.png
+![FFT Periodogram – 용산구](figure/용산구_fft_periodogram.png)
+- Main Analysis: figure/용산구_main_analysis.png
+![Main Analysis – 용산구](figure/용산구_main_analysis.png)
+- Ruptures Elbow: figure/용산구_ruptures_elbow.png
+![Ruptures Elbow – 용산구](figure/용산구_ruptures_elbow.png)
+
+=== 용산구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 29.5개월 -> 결정된 m: 30
+ >> [위상 분석] 초기 위상(Phase shift): -2.21 rad
+ >> [Welch 설정] nperseg: 90 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2006-02
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 5개
+ >> [Ruptures] 감지된 Change Points (총 5개):
+    - 2008-06
+    - 2010-07
+    - 2017-08
+    - 2018-06
+    - 2020-12
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2006-01
+    - 2006-02
+    - 2007-04
+    - 2007-05
+    - 2007-09
+    - 2021-03
+    - 2021-09
+    - 2021-11
+    - 2021-12
+    - 2022-06
+    - 2024-04
+    - 2024-09
+ >> [LOF] 탐지된 이상치 (총 14개, 이웃 N=12 기준):
+    - 2006-01
+    - 2006-02
+    - 2007-04
+    - 2007-05
+    - 2007-08
+    - 2007-09
+    - 2021-04
+    - 2021-09
+    - 2021-11
+    - 2021-12
+    - 2022-06
+    - 2024-02
+    - 2024-09
+    - 2025-03
+
+- FFT Periodogram: figure/은평구_fft_periodogram.png
+![FFT Periodogram – 은평구](figure/은평구_fft_periodogram.png)
+- Main Analysis: figure/은평구_main_analysis.png
+![Main Analysis – 은평구](figure/은평구_main_analysis.png)
+- Ruptures Elbow: figure/은평구_ruptures_elbow.png
+![Ruptures Elbow – 은평구](figure/은평구_ruptures_elbow.png)
+
+=== 은평구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 47.2개월 -> 결정된 m: 47
+ >> [위상 분석] 초기 위상(Phase shift): 1.07 rad
+ >> [Welch 설정] nperseg: 141 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2019-08
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 4개
+ >> [Ruptures] 감지된 Change Points (총 4개):
+    - 2008-01
+    - 2010-12
+    - 2016-05
+    - 2019-09
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2006-01
+    - 2006-02
+    - 2006-03
+    - 2006-04
+    - 2006-08
+    - 2020-11
+    - 2020-12
+    - 2021-01
+    - 2021-06
+    - 2024-07
+    - 2024-08
+    - 2025-06
+ >> [LOF] 탐지된 이상치 (총 3개, 이웃 N=12 기준):
+    - 2006-03
+    - 2020-12
+    - 2021-06
+
+- FFT Periodogram: figure/종로구_fft_periodogram.png
+![FFT Periodogram – 종로구](figure/종로구_fft_periodogram.png)
+- Main Analysis: figure/종로구_main_analysis.png
+![Main Analysis – 종로구](figure/종로구_main_analysis.png)
+- Ruptures Elbow: figure/종로구_ruptures_elbow.png
+![Ruptures Elbow – 종로구](figure/종로구_ruptures_elbow.png)
+
+=== 종로구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 47.2개월 -> 결정된 m: 47
+ >> [위상 분석] 초기 위상(Phase shift): 1.70 rad
+ >> [Welch 설정] nperseg: 141 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2008-09
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 6개
+ >> [Ruptures] 감지된 Change Points (총 6개):
+    - 2008-06
+    - 2016-10
+    - 2019-04
+    - 2020-07
+    - 2021-05
+    - 2023-01
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2006-08
+    - 2022-07
+    - 2022-08
+    - 2022-10
+    - 2022-11
+    - 2023-06
+    - 2023-08
+    - 2025-02
+    - 2025-03
+    - 2025-05
+    - 2025-06
+    - 2025-07
+ >> [LOF] 탐지된 이상치 (총 10개, 이웃 N=12 기준):
+    - 2006-08
+    - 2022-07
+    - 2022-08
+    - 2022-10
+    - 2022-11
+    - 2023-08
+    - 2025-02
+    - 2025-03
+    - 2025-05
+    - 2025-06
+
+- FFT Periodogram: figure/중구_fft_periodogram.png
+![FFT Periodogram – 중구](figure/중구_fft_periodogram.png)
+- Main Analysis: figure/중구_main_analysis.png
+![Main Analysis – 중구](figure/중구_main_analysis.png)
+- Ruptures Elbow: figure/중구_ruptures_elbow.png
+![Ruptures Elbow – 중구](figure/중구_ruptures_elbow.png)
+
+=== 중구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 47.2개월 -> 결정된 m: 47
+ >> [위상 분석] 초기 위상(Phase shift): 1.56 rad
+ >> [Welch 설정] nperseg: 141 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2011-12
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 7개
+ >> [Ruptures] 감지된 Change Points (총 7개):
+    - 2008-01
+    - 2015-07
+    - 2018-06
+    - 2020-02
+    - 2021-10
+    - 2023-01
+    - 2024-04
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2007-03
+    - 2007-05
+    - 2007-10
+    - 2020-11
+    - 2020-12
+    - 2021-07
+    - 2022-11
+    - 2023-02
+    - 2024-11
+    - 2025-02
+    - 2025-05
+    - 2025-08
+ >> [LOF] 탐지된 이상치 (총 9개, 이웃 N=12 기준):
+    - 2007-03
+    - 2007-10
+    - 2010-06
+    - 2012-03
+    - 2013-10
+    - 2018-03
+    - 2020-11
+    - 2022-05
+    - 2022-11
+
+- FFT Periodogram: figure/중랑구_fft_periodogram.png
+![FFT Periodogram – 중랑구](figure/중랑구_fft_periodogram.png)
+- Main Analysis: figure/중랑구_main_analysis.png
+![Main Analysis – 중랑구](figure/중랑구_main_analysis.png)
+- Ruptures Elbow: figure/중랑구_ruptures_elbow.png
+![Ruptures Elbow – 중랑구](figure/중랑구_ruptures_elbow.png)
+
+=== 중랑구 분석 ===
+ >> [HP Cycle FFT 분석] 감지된 순환 주기: 39.3개월 -> 결정된 m: 39
+ >> [위상 분석] 초기 위상(Phase shift): 2.38 rad
+ >> [Welch 설정] nperseg: 117 (m의 3.0배)
+ >> [Stumpy] Discord(특이 패턴) 발견일: 2009-07
+ >> [Ruptures] Elbow Method로 찾은 최적 변화점 개수: 4개
+ >> [Ruptures] 감지된 Change Points (총 4개):
+    - 2007-08
+    - 2017-03
+    - 2018-06
+    - 2020-07
+ >> [IsolationForest] 탐지된 이상치 (총 12개, 5% 기준):
+    - 2006-01
+    - 2007-02
+    - 2007-03
+    - 2007-04
+    - 2021-02
+    - 2021-03
+    - 2021-05
+    - 2021-06
+    - 2021-08
+    - 2024-07
+    - 2024-08
+    - 2025-01
+ >> [LOF] 탐지된 이상치 (총 8개, 이웃 N=12 기준):
+    - 2012-01
+    - 2021-03
+    - 2021-06
+    - 2021-08
+    - 2022-10
+    - 2024-07
+    - 2024-08
+    - 2025-01
