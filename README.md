@@ -1,3 +1,338 @@
+introduction → data description → methodology까지 완성했다면,
+그 다음 chapter는 **분석 결과(results)**와 **논의(discussion)**의 두 축으로 전개하는 것이 가장 자연스럽다.
+(또는 필요에 따라 *Results & Discussion*을 통합하거나 분리할 수 있다.)
+
+아래는 **너의 프로젝트 구조를 기반으로 가장 논리적인 다음 단계**이다.
+
+---
+
+# ✅ **다음에 와야 하는 Chapter: Results**
+
+### **왜 필요하나?**
+
+Methodology에서 설명한 알고리즘들이 실제로 어떤 결과를 냈는지를 보여주는 단계다.
+이 파트는 **코드가 아니라 insight 중심**이다.
+
+## 📌 **Results에 포함되어야 할 세부 항목**
+
+### **1. 구별 가격 사이클 탐지 결과**
+
+* 평균 사이클 길이
+* peak–trough 패턴 공통점
+* 구별 변동성(high volatility vs. low volatility)
+* 주요 변곡점 시기(2013 상승 전환, 2019 피크, 2022 하락 등)
+* 그래프 예시 2–3개
+* 전체 heatmap 또는 summary table
+
+**읽는 사람에게 핵심 질문**:
+“서울 25개구의 중장기 가격 주기는 실제로 어떤 구조를 보이는가?”
+
+---
+
+### **2. 패널 회귀 시도 결과**
+
+(패널 분석이 실패했지만, 이것은 ‘의미 있는 결과’이다.)
+
+* 고정효과/시간효과 회귀 결과 요약
+* F-test, R², 계수 값
+* 왜 잘 맞지 않았는지에 대한 간단한 해석
+
+  * 시계열 간 변동성이 비선형
+  * 공통요인 설명력의 한계
+  * 패널 가정 위배
+
+이 내용은 이후 DFM으로 넘어가는 연결 고리를 만드는 데 큰 역할을 한다.
+
+---
+
+### **3. Dynamic Factor Model(DFM) 결과**
+
+이 장이 본 프로젝트 분석의 핵심이다.
+
+* Factor 1의 시간 경로 그래프
+* 공통요인의 peak–trough
+* 각 구의 factor loading (bar plot or table)
+* 요인별 설명력 (% variance explained)
+* idiosyncratic component의 분포
+
+**핵심 메시지**:
+“서울 아파트 가격은 약 X%가 공통요인으로 설명되며, 강남·서초·송파는 공통요인 민감도가 높다.”
+
+---
+
+### **4. DTW 클러스터링 결과**
+
+* 최적 k (혹은 silhouette 기반 best k)
+* dendrogram
+* cluster 그룹별 평균 패턴 그래프
+* 각 cluster 내부의 지역 특성
+
+  * ex) 강남·서초·송파 vs 노원·도봉·성북
+* 반복적으로 함께 묶이는 구들의 공통점
+* 개별적으로 독립 움직임을 보이는 지역 목록
+
+---
+
+### **5. 분석 결과의 통합**
+
+사이클 분석 + DFM + 클러스터링 결과가 서로 어떻게 연결되는지 설명.
+예시:
+
+* 강남권은 factor loading이 높으면서 DTW에서도 독립 cluster
+* 노원·도봉·성북은 공통요인 민감도는 중간이지만 cycle 구조가 유사
+* 영등포·금천·중랑 등은 idiosyncratic shock 비중이 큰 지역
+
+이 파트를 넣으면 보고서 완성도가 올라간다.
+
+---
+
+# ✅ **다음 Chapter 2: Discussion (시사점)**
+
+Discussion은 **Results에 대한 해석, 의미, 응용** 중심이다.
+
+## 📌 **포함될 내용**
+
+### **1. 서울 아파트 시장의 구조적 특징에 대한 논의**
+
+* 공통요인의 강력한 존재
+* 지역 간 동조화(high synchronization)
+* 경기·정책 shock에 대한 반응 차이
+
+### **2. 지역별 클러스터 패턴이 갖는 의미**
+
+* **강남권 cluster**
+
+  * 시장 선도 효과
+  * 민감한 반응성
+* **노원·도봉·성북 cluster**
+
+  * 중장기적 cycles 유사
+  * 가격 탄력성 낮음
+* **독립적 움직임 구들**
+
+  * 정책 영향, 개발 호재, 국지적 shock 영향
+
+### **3. 정책적/실무적 시사점**
+
+* 투자 타이밍 예측에 이용 가능
+* 자치구별 시장구조 해석
+* 공통 shock 관리 정책 설계
+
+### **4. 연구의 한계**
+
+* 실거래 대신 KDI 가격지수 사용
+* 외생변수 미포함
+* DTW의 cluster 수 선택 문제
+* DFM의 선형성 가정 등
+
+→ 이 부분은 보고서 신뢰도를 크게 높인다.
+
+---
+
+# ✅ **다음 Chapter 3: Conclusion**
+
+결론은 다음 세 가지를 요약:
+
+1. **무엇을 했는가** (한 문장)
+2. **무엇을 발견했는가** (핵심 요약)
+3. **무엇을 할 수 있는가** (향후 연구)
+
+---
+
+# 📦 **마지막: Appendix**
+
+* 핵심 코드 (Methodology의 대표 코드)
+* 전체 figure (DTW heatmap, DFM factor plot, cycle detection plot 등)
+* full regression output
+* shapefile 시각화 코드
+
+---
+
+# 📘 최종 구조 정리
+
+```
+1. Introduction
+2. Data Description
+3. Preprocessing
+4. Methodology
+   4.1 Cycle Detection
+   4.2 Panel Regression Attempt
+   4.3 DFM
+   4.4 DTW Clustering
+5. Results
+   5.1 Cycle Detection Results
+   5.2 Panel Regression Results
+   5.3 DFM Results
+   5.4 Clustering Results
+   5.5 Integrated Interpretation
+6. Discussion
+   6.1 Structural Characteristics of Seoul Housing Market
+   6.2 Interpretation of Clusters
+   6.3 Policy/Investment Implications
+   6.4 Limitations
+7. Conclusion
+8. Appendix
+   - Key Code Snippets
+   - All Figures
+```
+
+---
+
+원하면 **Results 챕터 초안 전체**를 만들어줄 수도 있고,
+또는 **너의 figure 리스트를 보고 어떤 순서로 배치하면 되는지**까지 정리해줄게.
+
+
+
+
+
+
+
+
+
+
+
+
+
+.gitignore에 data results Output 빼 놨는데 보고서 작성하려면 어떻게 해야 하는가
+
+
+---
+
+introduction 서론
+  문제 정의
+data description 데이터 설명
+  데이터 이해
+preprocessing 전처리
+methodology 방법론
+  선택 이유
+  구현
+results 결과 해석 : 하이라이트
+  이것 저것 쓰고 interpretation
+discussion 시사점
+conclusion
+Appendix
+  핵심 코드
+  전체 Output figure
+
+✔ 1 개별 구의 사이클 및 변곡점 분석
+all_of_gu_price_cycle_detection.py
+
+여기부터 본격적인 “분석”.
+Cycle detection, peak/trough detection 등은 분석 방법론이므로 Methodology.
+
+✔ 2 패널용 데이터 구조 구축
+prepare_panel_timeseries.py
+panel_analysis.py
+
+패널 회귀가 실패했더라도,
+“시도한 분석”은 전부 Methodology다.
+(보고서에는 논리적 흐름으로 이렇게 보여준다:
+패널 분석 → 한계 발견 → DFM으로 전환)
+
+✔ 3 Dynamic Factor Model (DFM) 분석
+dfm_select_factors.py
+dfm_common_factor_cycle.py
+
+핵심 방법론 파트.
+요인 수 결정 + 공통 요인 추출 + 적재량 해석까지 포함.
+
+✔ 4 Clustering 기반 패턴 분석
+dtw_clustering.py
+dtw_clustering_visual.py
+
+
+figure
+해석(관찰)
+의미 (왜 중요한가?)
+
+인터렉티브 시각화
+plotly dash
+streamlit
+Panel or bokeh
+
+>> branch
+preprocess-seoul-excel
+bucketize-seoul-sale
+remove-outliers-seoul-sale
+monthly-indexing
+gu_price_cycle_detection
+panel-dynamci-factor-model
+common-cycle-analysis
+dtw-cluster
+
+
+>> files
+README.md
+git_handbook.md
+
+국토 교통부 실거래가 공개 시스템
+preprocess_apt_sale.py -> data/apt_sale_cleaned.csv
+bucketting.py -> data/apt_sale_cleaned_bucketing.csv
+iqr_outlier_removal.py -> data/apt_sale_cleaned_iqr.csv
+
+monthly_aggregation.py -> data/monthly_grouped.csv
+weighted_index.py -> data/weighted_index.csv
+국가통계포털 소비자 물가지수
+convert_to_real_price.py -> data/weighted_index_real.csv
+
+gu_price_cycle_detection.py
+all_of_gu_price_cycle_detection.py
+    -> figure/{gu}_main_analysis.png
+    -> figure/{gu}_ruptures_elbow.png
+    -> figure/{gu}_fft_periodogram.png
+    -> (results/anaysis_results.txt)
+prepare_panel_timeseries.py -> data/panel_prepared.csv, data/panel_wide_matrix.csv
+panel_analysis.py
+    -> figure/variance_decomposition_absolute.png
+    -> figure/variance_decomposition_ratio.png
+    -> figure/residual_acf_pacf.png
+    -> figure/residual_hist_qq.png
+    -> Ljung-Box Test for autocorrelation
+    -> Breusch-Pagan Test for heteroskedasticity
+
+dfm_select_factors.py -> data/dfm_common_factors.csv, data/dfm_idiosyncratic_components.csv
+dfm_common_factor_cycle.py -> figure/common_factor_main.png, figure/common_factor_fft.png
+
+dtw_clustering.py
+    -> hp_dendrogram_bestk2.png
+    -> idio_dendrogram_bestk2.png
+    -> panel_dendrogram_bestk2.png
+대한민국 최신 행정구역(SHP) 다운로드
+prepare_seoul_shapefile.py -> data/SEOUL_SIG.shp
+dtw_clustering_visual.py
+    -> figure/cluster_members_and_means.png
+    -> figure/cluster_explained_ratio.png
+    -> figure/cluster_welch_psd.png
+    -> figure/common_vs_cluster_means.png
+    -> figure/cluster_map.png
+
+국토교통부 실거래가 공개 시스템>조건별 자료제공>
+https://rt.molit.go.kr/pt/xls/xls.do?&mobileAt=
+
+[검색조건]
+계약일자 2006.01.01-2025.08.31
+실거래 구분: 아파트
+주소구분: 도로명 주소
+시도: 서울특별시
+시군구: 전체
+도로명: 전체
+단지명: 전체
+면적: 전체
+금액: 전체
+Excel 다운
+
+첫번째와 두번째 행
+NO	시군구	번지	본번	부번	단지명	전용면적(㎡)	계약년월	계약일	거래금액(만원)	동	층	매수자	매도자	건축년도	도로명	해제사유발생일	거래유형	중개사소재지	등기일자	주택유형
+1	서울특별시 중랑구 면목동	1502	1502	0000	현대	74.7900	200612	31	24,000	-	8	-	-	1994	용마산로 252	-	-	-	-	아파트
+
+KOSIS 국가 통계 포털>통계표>소비자물가지수
+https://kosis.kr/statHtml/statHtml.do?sso=ok&returnurl=https%3A%2F%2Fkosis.kr%3A443%2FstatHtml%2FstatHtml.do%3Flist_id%3D%26obj_var_id%3D%26seqNo%3D%26docId%3D02881%26tblId%3DDT_1J22003%26vw_cd%3DMT_ZTITLE%26orgId%3D101%26conn_path%3DE1%26markType%3DS%26itm_id%3D%26lang_mode%3Dko%26scrId%3D%26itmNm%3D%EC%A0%84%EA%B5%AD%26
+2006.01-2025.08 월별 지수
+
+대한민국 최신 행정구역(SHP) 다운로드
+http://www.gisdeveloper.co.kr/?p=2332 -> https://www.geoservice.co.kr/
+
+
 1 노션에 적어둔 목표 구체화와 이전까지 진행한 것들 다시 읽기
     사이클(이유), 특이점(이유)
 
