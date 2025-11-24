@@ -625,30 +625,29 @@ bp_test = het_breuschpagan(residuals, sm.add_constant(panel_reg[factor_cols]))
 
 ### **(4) 시도 결과 및 한계**
 
-#### **- 요인 설명력은 높았으나 회귀 형태에서는 제약 발생**
+#### **- 요인 설명력과 패널 회귀의 구조적 제약**
 
-* DFM에서 공통 요인이 전체 변동의 상당 부분을 설명했으나
-* fixed-effects 패널 회귀에서는 **시간효과(time FE)**가 모든 구에 동일한 충격을 제거한다.
-* 결과적으로 DFM의 common factor와 time FE가 **중복되는 설명력**을 갖기 때문에 유효 회귀 계수가 제한되거나 제거됨.
+Variance decomposition 결과, 공통 요인이 전체 변동의 약 85%를 설명했다.
+그러나 fixed-effects 패널 회귀에서는 **시간효과(Time FE)**가 모든 구에 공통으로 작용하는 충격을 제거하므로,
+DFM의 공통 요인과 설명력이 중첩되는 구조가 발생했다.
+그 결과 계수는 유효하게 동작하지 않았고, 회귀식 자체의 식별력이 약해졌다.
 
-#### **- 잔차에서 남는 자기상관**
+#### **- 잔차의 자기상관 문제**
 
-* ACF·PACF에서 특정 시차에 구조적 패턴이 남아 있었음.
-* 시계열 패널 자료는 일반 패널OLS 가정(독립성)에 적합하지 않음.
+ACF·PACF에서 다수의 양(+) 자기상관 구조가 확인되었고,
+Ljung–Box 테스트에서도 12-lag, 24-lag 모두 p-value = 0.0으로 귀무가설(무상관)을 기각했다.
+이는 시계열 패널 자료가 일반 패널 OLS의 독립성 가정을 충족하지 못함을 의미한다.
 
 #### **- 이분산성 존재**
 
-* Breusch-Pagan test에서 이분산 경향 확인.
-* 이는 구별로 변동성 규모가 다른 시계열 패턴 때문.
+Breusch–Pagan 테스트 결과 p-value가 매우 작아(≈ 8e-80)
+구별로 변동성 규모가 이질적임이 나타났다.
 
-#### **- 결론: 패널 회귀는 지원적 역할로 한정**
+#### **- 결론: 패널 회귀는 보조적 역할로 제한**
 
-* 패널 회귀는 DFM 요인이 유의미하다는 “보조적 정성 검증”으로 활용 가능하지만
-* **정량적 모형 선택으로는 부적합**하다는 판단.
-
-따라서 이후 분석은
-**공통 요인 기반 Dynamic Factor Model → 구별 패턴 분해 → 시계열 클러스터링(DTW)**
-흐름으로 전환했다.
+패널 회귀는 공통 요인 영향의 존재 여부를 보조적으로 확인하는 데 의미가 있었으나,
+정량 모델로 채택하기에는 식별성·잔차 특성·가정 위반 문제가 컸다.
+따라서 이후 분석은 DFM → 구별 패턴 분해 → DTW 기반 클러스터링으로 진행했다.
 
 ---
 
@@ -1244,6 +1243,157 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
 
 ---
 
+## **5.2 Panel Regression Results**
+
+본 절에서는 25개 구의 월별 실질 표준화 가격(real_std)을 종속 변수로 설정하고, 공통 요인을 설명 변수로 하는 **정적 패널 회귀(static PanelOLS)**를 적용한 결과를 제시한다. 이 분석은 “개별 구별 사이클 분석에서 도출된 공통적 동학이 실질적으로 패널 모형에서도 설명력을 갖는지”를 검증하기 위한 절차다.
+
+---
+
+### **(1) Variance Decomposition: Common Factor의 설명력 평가**
+
+패널 회귀에 앞서, 전체 시계열 변동성 중 공통 요인이 설명하는 비중을 평가하였다.
+그림 **variance_decomposition_absolute.png**, **variance_decomposition_ratio.png**은 총 분산 대비 공통 요인의 기여도를 시각화한다.
+
+![variance_decomposition_absolute.png](figure/variance_decomposition_absolute.png)
+
+![variance_decomposition_ratio.png](figure/variance_decomposition_ratio.png)
+
+
+#### **결과 요약**
+
+* Total variance: **0.9958**
+* Idiosyncratic variance: **0.1476**
+* **Explained by common factors: 85.18%**
+
+이는 전체 가격 움직임의 약 **85%가 공통 요인으로 설명됨**을 의미하며, “단일 지역 고유 충격보다 거시적·광역적 요인의 영향이 훨씬 강하다”는 점을 보여준다.
+따라서 패널 분석을 진행할 충분한 동기가 존재한다.
+
+---
+
+### **(2) Static Panel Regression Results**
+
+#### **모형 설명**
+
+* Estimator: **PanelOLS**
+* Dependent variable: **real_std**
+* Explanatory variable: **Factor1** (개별 구 사이클 분석에서 추출된 1차 공통 요인)
+* Included effects: **Entity fixed effect + Time fixed effect**
+* Covariance estimator: **Clustered**
+
+---
+
+### **(3) 주요 회귀 결과**
+
+```
+R-squared (within):       0.3010
+R-squared (overall):      0.3010
+R-squared (between):     -1.322e+24
+
+Coefficient (Factor1):    0.0171
+Std. Error:               1.107e+13
+T-stat:                   1.547e-15
+P-value:                  1.0000
+```
+
+#### **핵심 관찰 포인트**
+
+1. **Factor1의 계수가 통계적으로 유의하지 않음 (p ≈ 1.0)**
+   → 이는 공통 요인이 개별 구의 실질 표준화 가격 변동성과 방향성 있게 연결되지 않았음을 의미한다.
+
+2. **표준 오차가 비정상적으로 큼 (10¹³ 수준)**
+   → 다중공선성(multicollinearity) 또는 고정효과와 Factor1이 거의 동일한 형태를 가지며 식별 문제가 발생했음을 시사한다.
+
+3. **R-squared(between)의 음의 무한대적 형태**
+   → 구 간 단면 간 변동을 Factor1이 설명하지 못하고 있음을 의미.
+
+4. **F-test for poolability: p = 1.000**
+   → 단일 공통 계수를 모든 구에 동일하게 적용하는 가정이 지지되지 않는다.
+
+#### **해석**
+
+* 개별 구의 price cycle 분석에서는 **공통된 f ≈ 50–80개월 주기**가 존재했으나,
+* 패널 회귀에서는 **그 공통 요인이 개별 구의 normalized series를 선형적으로 설명하지 못함**이 확인되었다.
+* 이는 **(1) 비선형적 관계** 또는 **(2) 요인의 시차 구조**, **(3) 지역별 반응 계수의 상이함(heterogeneous reaction)**을 의미한다.
+
+→ 즉, **단일 회귀계수를 가정하는 정적 패널 모형은 부적합**하며,
+후속 분석으로 **DFM(Dynamic Factor Model)**을 적용해야 한다는 방향성을 제시한다.
+(이 자연스러운 흐름 덕분에 패널 회귀 파트는 Methodology 전체의 연결고리 역할을 수행한다.)
+
+본 회귀 결과의 전체 전문 출력(full output)은 Appendix B에 수록하였다.
+
+---
+
+### **(3) Residual Analysis**
+
+#### **(a) Residual Summary**
+
+```
+count = 5900
+mean ≈ 0
+std = 0.382
+min = -3.55
+max =  3.14
+```
+
+잔차 분포는 0을 중심으로 하나, 분산이 일정하지 않고 치우침이 관찰된다.
+
+---
+
+#### **(b) Residual ACF/PACF**
+
+![residual_acf_pacf.png](figure/residual_acf_pacf.png)
+
+ACF·PACF 모두 **lag 1–5 구간에서 높은 자기상관(0.40→0.18)**이 남아 있으며,
+이는 **정적 패널 회귀가 price momentum 구조를 포착하지 못했음을 뚜렷하게 보여준다.**
+
+---
+
+#### **(c) Normality Check: Histogram & Q-Q Plot**
+
+![residual_hist_qq.png](figure/residual_hist_qq.png)
+
+잔차의 중앙부는 대체로 직선에 근접하여 정규성 패턴을 보이지만,  
+양쪽 꼬리에서 점들이 직선을 크게 벗어나며 비대칭적인 곡선 형태(상승하는 3차곡선 형태)가 나타난다.  
+이는 **꼬리에서의 왜도(skewness)와 비정규성(non-normality)**을 시사하며,  
+모델의 정상성 가정이 충분히 충족되지 않음을 의미한다.
+
+---
+
+#### **(d) Diagnostic Tests**
+
+##### **Ljung–Box Test (Autocorrelation)**
+
+| Lag | lb_stat | p-value |
+| --- | ------- | ------- |
+| 12  | 3247.51 | 0.0     |
+| 24  | 3362.11 | 0.0     |
+
+→ **잔차에 강한 시차적 구조가 남음 → 모형 부적합 신호**
+
+##### **Breusch–Pagan Test (Heteroskedasticity)**
+
+* LM stat: **357.86**
+* p-value: **8.24e-80**
+* f-value: **380.83**
+* f p-value: **3.07e-82**
+
+→ **잔차 분산이 매우 이질적 → 단일 패널 회귀식으로 설명 불가**
+
+---
+
+### **(5) Interim Conclusion: Why the Panel Regression Failed**
+
+패널 회귀는 다음과 같은 이유로 실효성 있는 추정값을 제공하지 못했다.
+
+1. **Factor1이 고정효과와 정보가 중복되어 식별 불능**
+2. **단일 계수로 지역별 반응을 설명할 수 없었음**
+3. **잔차 구조가 강한 비정상성 및 자기상관 패턴을 보유**
+4. **변동성 자체가 시계열적·동태적 형태인데, 정적 모형은 이를 반영하지 못함**
+
+→ **따라서 패널 회귀는 분석 방향 설정을 위한 진단 단계로 의미가 있으며,**
+→ **본격적 공통 요인 분석은 Dynamic Factor Model(DFM)이 최적의 선택지임을 확인한다.**
+
+---
 
 
 
@@ -1348,6 +1498,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2022-08
     - 2025-04
 
+### 2. 강동구
 - FFT Periodogram: figure/강동구_fft_periodogram.png
 ![FFT Periodogram – 강동구](figure/강동구_fft_periodogram.png)
 - Main Analysis: figure/강동구_main_analysis.png
@@ -1388,6 +1539,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2025-05
     - 2025-06
 
+### 3. 강북구
 - FFT Periodogram: figure/강북구_fft_periodogram.png
 ![FFT Periodogram – 강북구](figure/강북구_fft_periodogram.png)
 - Main Analysis: figure/강북구_main_analysis.png
@@ -1437,6 +1589,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2022-01
     - 2022-12
 
+### 4. 강서구
 - FFT Periodogram: figure/강서구_fft_periodogram.png
 ![FFT Periodogram – 강서구](figure/강서구_fft_periodogram.png)
 - Main Analysis: figure/강서구_main_analysis.png
@@ -1484,6 +1637,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2021-07
     - 2021-08
 
+### 5. 관악구
 - FFT Periodogram: figure/관악구_fft_periodogram.png
 ![FFT Periodogram – 관악구](figure/관악구_fft_periodogram.png)
 - Main Analysis: figure/관악구_main_analysis.png
@@ -1538,6 +1692,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2025-05
     - 2025-06
 
+### 6. 광진구
 - FFT Periodogram: figure/광진구_fft_periodogram.png
 ![FFT Periodogram – 광진구](figure/광진구_fft_periodogram.png)
 - Main Analysis: figure/광진구_main_analysis.png
@@ -1583,6 +1738,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2016-03
     - 2022-12
 
+### 7. 구로구
 - FFT Periodogram: figure/구로구_fft_periodogram.png
 ![FFT Periodogram – 구로구](figure/구로구_fft_periodogram.png)
 - Main Analysis: figure/구로구_main_analysis.png
@@ -1626,6 +1782,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2024-06
     - 2025-06
 
+### 8. 금천구
 - FFT Periodogram: figure/금천구_fft_periodogram.png
 ![FFT Periodogram – 금천구](figure/금천구_fft_periodogram.png)
 - Main Analysis: figure/금천구_main_analysis.png
@@ -1666,6 +1823,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2021-09
     - 2021-10
 
+### 9. 노원구
 - FFT Periodogram: figure/노원구_fft_periodogram.png
 ![FFT Periodogram – 노원구](figure/노원구_fft_periodogram.png)
 - Main Analysis: figure/노원구_main_analysis.png
@@ -1707,6 +1865,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2021-06
     - 2021-09
 
+### 10. 도봉구
 - FFT Periodogram: figure/도봉구_fft_periodogram.png
 ![FFT Periodogram – 도봉구](figure/도봉구_fft_periodogram.png)
 - Main Analysis: figure/도봉구_main_analysis.png
@@ -1747,6 +1906,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2021-09
     - 2021-10
 
+### 11. 동대문구
 - FFT Periodogram: figure/동대문구_fft_periodogram.png
 ![FFT Periodogram – 동대문구](figure/동대문구_fft_periodogram.png)
 - Main Analysis: figure/동대문구_main_analysis.png
@@ -1786,6 +1946,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2020-12
     - 2021-08
 
+### 12. 동작구
 - FFT Periodogram: figure/동작구_fft_periodogram.png
 ![FFT Periodogram – 동작구](figure/동작구_fft_periodogram.png)
 - Main Analysis: figure/동작구_main_analysis.png
@@ -1830,6 +1991,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2021-07
     - 2022-06
 
+### 13. 마포구
 - FFT Periodogram: figure/마포구_fft_periodogram.png
 ![FFT Periodogram – 마포구](figure/마포구_fft_periodogram.png)
 - Main Analysis: figure/마포구_main_analysis.png
@@ -1873,6 +2035,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2025-05
     - 2025-06
 
+### 14. 서대문구
 - FFT Periodogram: figure/서대문구_fft_periodogram.png
 ![FFT Periodogram – 서대문구](figure/서대문구_fft_periodogram.png)
 - Main Analysis: figure/서대문구_main_analysis.png
@@ -1920,6 +2083,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2022-01
     - 2025-06
 
+### 15. 서초구
 - FFT Periodogram: figure/서초구_fft_periodogram.png
 ![FFT Periodogram – 서초구](figure/서초구_fft_periodogram.png)
 - Main Analysis: figure/서초구_main_analysis.png
@@ -1955,6 +2119,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
  >> [LOF] 탐지된 이상치 (총 1개, 이웃 N=12 기준):
     - 2025-02
 
+### 16. 성동구
 - FFT Periodogram: figure/성동구_fft_periodogram.png
 ![FFT Periodogram – 성동구](figure/성동구_fft_periodogram.png)
 - Main Analysis: figure/성동구_main_analysis.png
@@ -2006,6 +2171,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2022-09
     - 2025-06
 
+### 17. 성북구
 - FFT Periodogram: figure/성북구_fft_periodogram.png
 ![FFT Periodogram – 성북구](figure/성북구_fft_periodogram.png)
 - Main Analysis: figure/성북구_main_analysis.png
@@ -2044,6 +2210,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2021-09
     - 2022-03
 
+### 18. 송파구
 - FFT Periodogram: figure/송파구_fft_periodogram.png
 ![FFT Periodogram – 송파구](figure/송파구_fft_periodogram.png)
 - Main Analysis: figure/송파구_main_analysis.png
@@ -2087,6 +2254,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2021-09
     - 2022-01
 
+### 19. 양천구
 - FFT Periodogram: figure/양천구_fft_periodogram.png
 ![FFT Periodogram – 양천구](figure/양천구_fft_periodogram.png)
 - Main Analysis: figure/양천구_main_analysis.png
@@ -2139,6 +2307,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2023-11
     - 2024-11
 
+### 20. 영등포구
 - FFT Periodogram: figure/영등포구_fft_periodogram.png
 ![FFT Periodogram – 영등포구](figure/영등포구_fft_periodogram.png)
 - Main Analysis: figure/영등포구_main_analysis.png
@@ -2179,6 +2348,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2024-09
     - 2025-06
 
+### 21. 용산구
 - FFT Periodogram: figure/용산구_fft_periodogram.png
 ![FFT Periodogram – 용산구](figure/용산구_fft_periodogram.png)
 - Main Analysis: figure/용산구_main_analysis.png
@@ -2227,6 +2397,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2024-09
     - 2025-03
 
+### 22. 은평구
 - FFT Periodogram: figure/은평구_fft_periodogram.png
 ![FFT Periodogram – 은평구](figure/은평구_fft_periodogram.png)
 - Main Analysis: figure/은평구_main_analysis.png
@@ -2263,6 +2434,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2020-12
     - 2021-06
 
+### 23. 종로구
 - FFT Periodogram: figure/종로구_fft_periodogram.png
 ![FFT Periodogram – 종로구](figure/종로구_fft_periodogram.png)
 - Main Analysis: figure/종로구_main_analysis.png
@@ -2308,6 +2480,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2025-05
     - 2025-06
 
+### 24. 중구
 - FFT Periodogram: figure/중구_fft_periodogram.png
 ![FFT Periodogram – 중구](figure/중구_fft_periodogram.png)
 - Main Analysis: figure/중구_main_analysis.png
@@ -2353,6 +2526,7 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2022-05
     - 2022-11
 
+### 25. 중랑구
 - FFT Periodogram: figure/중랑구_fft_periodogram.png
 ![FFT Periodogram – 중랑구](figure/중랑구_fft_periodogram.png)
 - Main Analysis: figure/중랑구_main_analysis.png
@@ -2393,3 +2567,63 @@ HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 �
     - 2024-07
     - 2024-08
     - 2025-01
+
+---
+
+## B. PanelOLS Full Output (Entity FE + Time FE)**
+
+본 절은 본문에서 요약하여 제시한 PanelOLS 추정 결과의 **전체 전문 출력**을 포함한다.
+모델은 **Entity Fixed Effects + Time Fixed Effects**, 공분산 추정은 **Clustered** 옵션을 사용하였다.
+수치는 Python `linearmodels` 패키지의 `PanelOLS` 결과를 그대로 제시한다.
+
+---
+
+### **(1) Model Specification**
+
+* **Dependent variable:** `real_std`
+* **Regressor:** `Factor1` (Dynamic Factor Model에서 추출한 1st common factor)
+* **Fixed Effects:** Entity FE, Time FE
+* **Covariance Estimator:** Clustered
+* **Observations:** 5900
+* **Entities:** 25개 구
+* **Time periods:** 236개월
+
+---
+
+### **(2) PanelOLS Estimation Summary (Raw Output)**
+
+```
+PanelOLS Estimation Summary
+================================================================================
+Dep. Variable:               real_std   R-squared:                        0.0000
+Estimator:                   PanelOLS   R-squared (Between):          -1.322e+24
+No. Observations:                5900   R-squared (Within):               0.3010
+Date:                Mon, Nov 24 2025   R-squared (Overall):              0.3010
+Time:                        19:17:46   Log-likelihood                   -2700.2
+Cov. Estimator:             Clustered
+                                        F-statistic:                      0.0000
+Entities:                          25   P-value                           1.0000
+Avg Obs:                       236.00   Distribution:                  F(1,5639)
+Min Obs:                       236.00
+Max Obs:                       236.00   F-statistic (robust):          2.395e-30
+                                        P-value                           1.0000
+Time periods:                     236   Distribution:                  F(1,5639)
+Avg Obs:                       25.000
+Min Obs:                       25.000
+Max Obs:                       25.000
+
+                             Parameter Estimates
+==============================================================================
+            Parameter  Std. Err.     T-stat    P-value    Lower CI    Upper CI
+------------------------------------------------------------------------------
+Factor1        0.0171  1.107e+13  1.547e-15     1.0000   -2.17e+13    2.17e+13
+==============================================================================
+
+F-test for Poolability: 0.4787
+P-value: 1.0000
+Distribution: F(259,5639)
+
+Included effects: Entity, Time
+```
+
+---
