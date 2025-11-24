@@ -1,7 +1,8 @@
 목차 만들고 클릭시 목차로 빠르게 이동하는 기능 본문에서 제목 누르면 최 상단 목차 테이블로 이동
 
+# **1. Introduction**
 
-# **Data Description**
+# **2. Data Description**
 
 본 프로젝트에서는 국토교통부 실거래가 공개시스템 ([https://rt.molit.go.kr](https://rt.molit.go.kr/pt/xls/xls.do?&mobileAt=))에서 제공하는 **서울특별시 아파트 실거래 자료(2006.01.01–2025.08.31)**를 활용하였다.
 
@@ -30,9 +31,9 @@
 
 ---
 
-# **Preprocessing**
+# **3. Preprocessing**
 
-## **1. 두 시트 결합 및 날짜 생성**
+## **3.1. 두 시트 결합 및 날짜 생성**
 
 엑셀 파일의 두 시트(2006~2015, 2016~2025.8)를 하나의 DataFrame으로 통합한 후,
 `계약년월`과 `계약일` 정보를 기반으로 단일 날짜 변수(`date`)를 생성하였다.
@@ -55,7 +56,7 @@ df = df[df['date'].notna()]
 
 ---
 
-## **2. 주소 분해: 구/동 추출**
+## **3.2. 주소 분해: 구/동 추출**
 
 `시군구` 변수는 `"서울특별시 중랑구 면목동"`과 같은 문자열로 구성되어 있어,
 본 연구에서는 분석 단위를 구별로 다루기 위해 이를 세 부분으로 나누어 사용하였다.
@@ -73,7 +74,7 @@ df = df.drop(columns=['시'])
 
 ---
 
-## **3. 수치형 변수 정제**
+## **3.3. 수치형 변수 정제**
 
 실거래 금액, 건축년도, 전용면적 등의 변수는 문자열·결측치·콤마 등이 포함되어 있어
 이를 정수 또는 실수로 변환하였다.
@@ -93,7 +94,7 @@ df['거래금액(만원)'] = pd.to_numeric(
 
 ---
 
-## **4. 분석용 컬럼 정리 및 저장**
+## **3.4. 분석용 컬럼 정리 및 저장**
 
 필요한 변수만 선별하여 다음 순서로 재배치하였다.
 
@@ -114,7 +115,7 @@ df['거래금액(만원)'] = pd.to_numeric(
 df.to_csv("data/apt_sale_cleaned.csv", index=False, encoding="utf-8-sig")
 ```
 
-## **5. 전용면적 및 노후도 버킷팅(Bucketing)**
+## **3.5. 전용면적 및 노후도 버킷팅(Bucketing)**
 
 아파트 가격은 전용면적과 건축년도 같은 물리적 특성에 따라 구조적인 차이를 보이기 때문에,
 분석 과정에서 **거래 금액의 분포를 안정화하고 구간별 비교가 가능하도록**
@@ -176,7 +177,7 @@ age = (거래년도) - (건축년도)
 
 ---
 
-## **6. IQR 기반 이상치 제거**
+## **3.6. IQR 기반 이상치 제거**
 
 서울 아파트 실거래 데이터는 단지명, 면적대, 층수, 특수 거래 등 다양한 요인의 영향으로
 일부 **극단값(outlier)**이 존재한다.
@@ -223,7 +224,7 @@ Dynamic Factor Model(DFM) 적용의 입력으로 사용된다.
 보고서에 바로 포함할 수 있는 서술 방식으로 정돈한 내용이야.
 각 단계가 왜 필요한지, 어떤 방식으로 구현했는지, 분석 전체 흐름 속에서 어떤 역할을 하는지를 명확히 설명하도록 구성했다.
 
-## **7. 월별 집계(Monthly Aggregation)**
+## **3.7. 월별 집계(Monthly Aggregation)**
 
 전처리된 거래 자료는 건별 시점·면적·노후도·단지 특성이 모두 다르기 때문에,
 그대로 사용하면 월 단위 시계열 비교가 어렵다.
@@ -264,7 +265,7 @@ monthly_grouped['count'] = df.groupby(
 
 ---
 
-## **8. 가중 지수 계산(Weighted Price Index)**
+## **3.8. 가중 지수 계산(Weighted Price Index)**
 
 월별 집계 데이터는 면적·노후도별로 쪼개져 있기 때문에,
 이를 다시 **구 단위의 단일 월별 가격지수**로 통합할 필요가 있다.
@@ -301,7 +302,7 @@ weighted_index = df.groupby(['year_month', '구']).apply(
 
 ---
 
-## **9. 실질 가격 변환(Real Price Index Conversion)**
+## **3.9. 실질 가격 변환(Real Price Index Conversion)**
 
 명목 가격지수는 명확한 추세를 보여주지만,
 2006~2025 기간 동안 소비자물가(CPI)가 꾸준히 상승해왔기 때문에
@@ -357,7 +358,7 @@ price_df['real_price_index'] = price_df.apply(compute_real_price, axis=1)
 
 ---
 
-# 📘 **Methodology**
+# **4. Methodology**
 
 본 연구의 방법론은 총 네 단계로 구성된다:
 ① 개별 구 단위의 가격 사이클 탐지,
@@ -369,218 +370,687 @@ price_df['real_price_index'] = price_df.apply(compute_real_price, axis=1)
 먼저 지역별 고유 패턴을 파악하고, 이후 이를 패널 구조로 통합해 설명가능성을 평가하며, 마지막으로 공통요인을 도출하고 클러스터링으로 패턴을 분류하는 방식이다.
 
 ---
+## **4.1. 개별 구의 가격 사이클 및 변곡점 탐지**
 
-## **1. 개별 구의 가격 사이클 및 변곡점 탐지**
+### **(1) 목적**
 
-### 1.1 목적
+개별 구별(real_price_index) 시계열에서
 
-각 구의 아파트 가격은 독립적으로 변동하기보다 상승-하락의 주기를 갖는다.
-이를 수학적으로 정의하기 위해, 각 구별 시계열에서
+1. 장·단기 추세 분리(STL, HP Filter),
+2. 주기성 탐지(FFT 기반),
+3. 이상 패턴 탐지(Matrix Profile),
+4. 구조적 변화점(Ruptures),
+5. 극단값 이상치(IsolationForest, LOF)  
 
-* 국소 최대값(peak)
-* 국소 최소값(trough)
-* 사이클 길이
-* 사이클 강도
-  를 탐지하였다.
+을 통합적으로 수행하여 **각 구의 가격 사이클 구조와 변곡점(패턴 변화 지점)을 자동 탐지**하는 것이 목적이다.
 
-## 1.2 주요 알고리즘
-
-* SciPy의 `find_peaks` 이용
-* prominence, distance, height 조건 조정
-* peak / trough 간 간격으로 "사이클 길이" 계산
-* 분기별 smoothing 적용해 잡음 제거
-
-## 1.3 대표 코드
-
-아래 코드는 `all_of_gu_price_cycle_detection.py`에서 구별 사이클을 계산하는 핵심 부분이다.
-
-```
-# 각 구별로 price cycle 탐지
-for gu, series in gu_time_series.items():
-    y = series.values
-
-    # 피크 탐지
-    peaks, _ = find_peaks(y, prominence=0.05, distance=3)
-    troughs, _ = find_peaks(-y, prominence=0.05, distance=3)
-
-    cycles = []
-    for p, t in zip(peaks, troughs):
-        cycle_length = abs(t - p)
-        cycles.append(cycle_length)
-
-    result[gu] = {
-        "peaks": peaks.tolist(),
-        "troughs": troughs.tolist(),
-        "cycles": cycles,
-    }
-```
-
-## 1.4 결과 활용
-
-이 단계는 이후 DFM에서 구별 로딩(loadings) 비교 시 각 지역의 고유 변동성과 연결해 해석하는 데 사용된다.
+모든 분석은 **사전 파라미터 고정 없이**, FFT 기반 자동 주기 추정(m), Ruptures elbow 탐색(k) 등 **데이터 구동적(data-driven) 방식**으로 수행되도록 설계했다.
 
 ---
 
-# **2. 패널 데이터 구조 구축 및 패널 회귀 분석**
+### **(2) 주요 알고리즘**
 
-## 2.1 목적
+#### **- STL Decomposition**
 
-서울 25개 구의 가격지수는 동일 시점에 공통 충격(금리, 경기 등)을 받을 수 있다.
-이를 검증하기 위해 각 구를 **패널 데이터**로 구성하여 고정효과/랜덤효과 회귀를 수행하였다.
+* `STL(series, period=12)`
+* 계절성(12개월), 장기추세(trend), 잔차를 분해하여 기본 구조를 파악.
 
-## 2.2 패널 데이터 구축
+#### **- HP Filter (λ=129600)**
 
-`prepare_panel_timeseries.py`에서는 다음 구조를 가진 데이터셋을 생성한다.
+* 장기추세와 순환성분(cycle) 추출.
+* 이후 FFT 기반 주기 추정에 cycle 사용.
 
-* entity: 구(25개)
-* time: 월 단위(236개)
-* value: 실질 가격의 표준화 지수(real_std)
-* factor 후보 변수: 공통 요인 proxy
+#### **- FFT 기반 자동 주기 추정(m)**
 
-대표 코드:
+* HP-filter cycle에 대해 FFT 적용 → 파워 스펙트럼 `Pxx` 산출
+* 최대 파워 주파수 인덱스 추출
+* `dominant_period = 1 / freq[top_idx]`
+* `m = max(12, round(dominant_period))`
+  → 노이즈성 짧은 주기 방지
 
+또한 해당 주파수의 위상값(phase shift)을 추출해 코사인 기반 이상적 주기선(m-cycle line) 시각화에 활용.
+
+#### **- Welch PSD 보조 분석**
+
+* `nperseg = min(len(series), m*3)`
+* 주기(m) 기반으로 세그먼트 길이 자동 설정.
+
+#### **- Matrix Profile (Stumpy) 기반 Discord 탐지**
+
+* `mp = stumpy.stump(values, m)`
+* 최댓값 인덱스 → 가장 특이한 subsequence(Discord) 탐지
+* 해당 시점은 “주기 구조를 가장 크게 벗어난 구간”.
+
+#### **- Ruptures – Binseg + Elbow Method**
+
+* 변화점 후보 k = 1~15 반복
+* 각각 cost 계산
+* **직선에서 가장 멀어진 지점 = Elbow**
+  → `optimal_n_bkps` 자동 결정
+* `predict(n_bkps=k)`로 최적 변화점 도출
+
+#### **- 이상치 탐지 (IsolationForest / LOF)**
+
+* IsolationForest: contamination=0.05
+* LOF: n_neighbors=12
+* 값 기반 이상치(극단값)를 판별
+
+---
+
+### **(3) 대표 코드**
+
+아래는 분석 과정 구성에서 핵심 역할을 수행하는 코드 일부(바로 동작 가능한 형태 그대로)이다.
+
+#### **- STL & HP Filter**
+
+```python
+stl = STL(series, period=12)
+res = stl.fit()
+trend = res.trend
+seasonal = res.seasonal
+
+cycle, trend_hp = hpfilter(values, lamb=129600)
 ```
-panel_df = pd.DataFrame({
-    "gu": all_series.index.get_level_values(0),
-    "year_month": all_series.index.get_level_values(1),
-    "real_std": all_series.values,
-})
 
-panel_df = panel_df.set_index(["gu", "year_month"])
-panel_df = panel_df.sort_index()
+#### **- FFT 기반 자동 주기 탐지**
+
+```python
+fft_result = np.fft.fft(cycle)
+freqs = np.fft.fftfreq(N)
+
+Pxx = np.abs(fft_result[1:N//2])**2
+top_idx = np.argmax(Pxx) + 1
+
+dominant_period = 1 / freqs[top_idx]
+m = int(max(12, round(dominant_period)))
+
+phase_rad = np.angle(fft_result[top_idx])
 ```
 
-## 2.3 패널 회귀 시도 (`panel_analysis.py`)
+#### **- Matrix Profile – Discord 탐지**
 
-아래는 핵심 회귀 부분이다.
-
+```python
+mp = stumpy.stump(values, m)
+discord_idx = np.argmax(mp[:, 0])
+discord_date = series.index[discord_idx]
 ```
-mod = PanelOLS(
-    panel_df["real_std"],
-    panel_df[["Factor1"]],
-    entity_effects=True,
-    time_effects=True
+
+#### **- Ruptures + Elbow Method**
+
+```python
+algo_binseg = rpt.Binseg(model="rbf").fit(values)
+costs = []
+
+for k in range(1, 16):
+    bkps = algo_binseg.predict(n_bkps=k)
+    costs.append(algo_binseg.cost.sum_of_costs(bkps))
+
+optimal_n_bkps = find_elbow_point(costs)
+change_points = algo_binseg.predict(n_bkps=optimal_n_bkps)
+change_dates = series.index[np.array(change_points[:-1]) - 1]
+```
+
+#### **- 이상치 탐지 (IForest, LOF)**
+
+```python
+X = values.reshape(-1, 1)
+
+iforest = IsolationForest(contamination=0.05, random_state=42)
+outlier_dates_if = series.index[iforest.fit_predict(X) == -1]
+
+lof = LocalOutlierFactor(n_neighbors=12)
+outlier_dates_lof = series.index[lof.fit_predict(X) == -1]
+```
+
+---
+
+## **4.2. 패널 데이터 구조 구축 및 패널 회귀 분석**
+
+### **(1) 목적**
+
+서울 25개 구의 실질가격 시계열을 단일 시계열로 취급하면 지역별 상이한 구조적 변화나 고유 패턴을 반영하기 어렵다. 이를 보완하기 위해 각 구를 독립 개체(entity)로 간주하고, 월별 시계열(year_month)을 공유하는 형태의 **패널 데이터(panel data)**를 구성했다.
+또한 Dynamic Factor Model(DFM)에서 추출된 **공통 요인(common factors)**을 설명변수로 사용해, 지역별 가격 변동이 얼마나 공통 충격에 의해 설명되는지 검증하기 위한 **패널 회귀(panel regression)**를 수행했다.
+
+---
+
+### **(2) 패널 데이터 구축**
+
+패널 회귀와 요인모형 모두에서 요구하는 정형화된 데이터 구조를 만들기 위해 다음 단계를 거쳤다.
+
+#### **- 시계열 정렬 및 클리닝**
+
+```python
+df = pd.read_csv("data/weighted_index_real.csv")
+df['year_month'] = pd.to_datetime(df['year_month'])
+df = df.sort_values(["구", "year_month"]).reset_index(drop=True)
+```
+
+* 모든 구에 대해 시계열이 시간 순서로 정렬된 구조 확보.
+
+#### **- 불필요 변수 제거 및 표준화(z-score)**
+
+```python
+df_model = df.drop(columns=["weighted_price_index"])
+
+df_model['real_std'] = df_model.groupby("구")['real_price_index'].transform(
+    lambda x: (x - x.mean()) / x.std()
+)
+```
+
+* DFM, 패널 회귀 모두 **스케일 차이를 제거**해 안정적인 추정 수행.
+* real_std는 이후 wide matrix와 회귀 모두에서 활용되는 핵심 변수.
+
+#### **- Long-form 패널 구조 정리**
+
+```python
+df_model = df_model[['year_month', '구', 'real_price_index', 'real_std']]
+df_model.to_csv("data/panel_prepared.csv", index=False)
+```
+
+#### **- DFM용 Wide Matrix 생성**
+
+```python
+df_wide = df_model.pivot(index='year_month', columns='구', values='real_std')
+df_wide.to_csv("data/panel_wide_matrix.csv")
+```
+
+* 패널 회귀는 long-form을,
+* DFM은 wide-form(행: 날짜, 열: 구)을 요구하므로 두 형태를 모두 생성.
+
+---
+
+### **(3) 패널 회귀 시도**
+
+#### **- 요인모형 결과 결합**
+
+패널 회귀의 목적은 real_std가 DFM의 공통 요인에 의해 얼마나 설명되는지 검증하는 것이다.
+
+```python
+factors = pd.read_csv("data/dfm_common_factors.csv", index_col=0, parse_dates=True)
+
+panel = pd.read_csv("data/panel_wide_matrix.csv", index_col=0, parse_dates=True)
+panel_long = panel.reset_index().melt(
+    id_vars='year_month', 
+    var_name='구', 
+    value_name='real_std'
 )
 
-res = mod.fit(cov_type="clustered")
-print(res.summary)
+panel_reg = pd.merge(panel_long.reset_index(), factors.reset_index(), on='year_month', how='left')
+panel_reg.set_index(['구','year_month'], inplace=True)
+panel_reg = panel_reg.sort_index()
 ```
 
-### 2.4 시도 결과 및 한계
+#### **- PanelOLS 구성 (Fixed Effects + Time Effects)**
 
-회귀 결과는
+```python
+y = panel_reg['real_std']
+X = panel_reg[factor_cols]
 
-* 계수 비유의미
-* F-test p-value = 1
-* Between R² 음수
-  등으로 매우 불안정하였다.
+po_model = PanelOLS(
+    y, X, 
+    entity_effects=True, 
+    time_effects=True, 
+    drop_absorbed=True
+)
 
-이는
-① 각 구의 변동성이 비선형적이고
-② 단일 요인으로 설명이 어렵고
-③ 패널 회귀 가정(독립성·정상성)을 위배하는
-등의 구조적 한계로 판단된다.
+po_res = po_model.fit(cov_type='clustered', cluster_entity=True)
+print(po_res.summary)
+```
 
-**따라서 본 연구는 패널 회귀 대신 공통요인을 직접 추출하는 DFM 단계로 넘어간다.**
+특징:
+
+* **entity fixed effects**: 구별 평균적 차이 제거
+* **time fixed effects**: 전 시점 공통 충격 제거
+* **drop_absorbed=True**: 시간·개체 효과에 의해 중복되는 요인은 자동 제거
+* **cluster_entity=True**: 구 단위로 군집 표준오차 계산
+
+#### **- 잔차 진단 수행**
+
+시간연속 시계열 패널의 특징으로 인해 잔차 진단은 필수다.
+
+##### (a) ACF / PACF
+
+```python
+acf_vals = acf(residuals, nlags=24)
+pacf_vals = pacf(residuals, nlags=24)
+```
+
+##### (b) 분포 검증 (Histogram, QQ-plot)
+
+```python
+plt.hist(residuals, bins=30)
+sm.qqplot(residuals, line='45')
+```
+
+##### (c) 자기상관 검정 (Ljung-Box)
+
+```python
+acorr_ljungbox(residuals, lags=[12,24], return_df=True)
+```
+
+##### (d) 이분산성 검정 (Breusch-Pagan)
+
+```python
+bp_test = het_breuschpagan(residuals, sm.add_constant(panel_reg[factor_cols]))
+```
 
 ---
 
-# **3. Dynamic Factor Model(DFM) 분석**
+### **(4) 시도 결과 및 한계**
 
-## 3.1 목적
+#### **- 요인 설명력은 높았으나 회귀 형태에서는 제약 발생**
 
-25개 구의 가격 변동에서
+* DFM에서 공통 요인이 전체 변동의 상당 부분을 설명했으나
+* fixed-effects 패널 회귀에서는 **시간효과(time FE)**가 모든 구에 동일한 충격을 제거한다.
+* 결과적으로 DFM의 common factor와 time FE가 **중복되는 설명력**을 갖기 때문에 유효 회귀 계수가 제한되거나 제거됨.
 
-* 모든 구가 공유하는 “서울 전체 공통 요인”
-* 각 구 고유 idiosyncratic shock
-  을 분리하여 구조적 패턴을 파악하는 것이 핵심 목표다.
+#### **- 잔차에서 남는 자기상관**
 
-## 3.2 요인 수 결정 (`dfm_select_factors.py`)
+* ACF·PACF에서 특정 시차에 구조적 패턴이 남아 있었음.
+* 시계열 패널 자료는 일반 패널OLS 가정(독립성)에 적합하지 않음.
 
-AIC/BIC 최소값 기준, cumulative variance 기준 등을 조합해 최적의 q개 요인을 선택한다.
+#### **- 이분산성 존재**
 
-대표 코드:
+* Breusch-Pagan test에서 이분산 경향 확인.
+* 이는 구별로 변동성 규모가 다른 시계열 패턴 때문.
 
-```
-bic_scores = []
-for q in range(1, 6):
-    model = DynamicFactor(df_z, k_factors=q, factor_order=1)
-    res = model.fit()
-    bic_scores.append(res.bic)
-```
+#### **- 결론: 패널 회귀는 지원적 역할로 한정**
 
-## 3.3 공통 요인 추출 (`dfm_common_factor_cycle.py`)
+* 패널 회귀는 DFM 요인이 유의미하다는 “보조적 정성 검증”으로 활용 가능하지만
+* **정량적 모형 선택으로는 부적합**하다는 판단.
 
-아래는 공통 요인을 추정하는 주요 부분이다.
-
-```
-model = DynamicFactor(df_z, k_factors=1, factor_order=1)
-res = model.fit()
-
-common_factor = res.factors.filtered["factor.1"]
-loadings = res.params.filter(like="factor_loading")
-```
-
-## 3.4 요인 해석
-
-* Common factor는 **서울 전체의 경기 사이클을 반영**
-* 각 구 로딩값은 “공통적인 충격에 대한 민감도”
-* idiosyncratic variance는 지역 고유 충격의 비중
-
-예:
-“85.18%가 공통요인으로 설명됨” → 서울 시장이 고도로 동조화됨.
-
-## 3.5 Cycle extraction from common factor
-
-추출된 공통요인은 다시 peak-trough 분석에 사용되어 전체 사이클(버블-조정-반등)을 해석한다.
+따라서 이후 분석은
+**공통 요인 기반 Dynamic Factor Model → 구별 패턴 분해 → 시계열 클러스터링(DTW)**
+흐름으로 전환했다.
 
 ---
 
-# **4. DTW 기반 구별 패턴 클러스터링**
+## **4.3. Dynamic Factor Model(DFM) 분석**
 
-## 4.1 목적
+### **(1) 목적**
 
-서울 25개 구는 공통 요인을 공유하더라도, **동일 타이밍에 동일한 패턴으로 움직이지 않는다.**
-그래서 시계열 간 유사도를 비교하는 DTW를 사용해 **가격 흐름이 비슷한 지역끼리 군집화**하였다.
+서울 25개구의 월별 실질 주택가격 변동에는 지역 고유 충격뿐 아니라 공통적인 거시적 충격(금리·유동성·전체 경기 흐름 등)이 동시에 작용한다.
+따라서 패널 전체에 공통적으로 작용하는 **장기·중기 주기적 요인(common factor)**을 분리하고 그 변동성 기여도를 파악하기 위해 **Dynamic Factor Model(DFM)**을 적용하였다.
 
-## 4.2 알고리즘
+본 분석의 목적은 다음과 같다.
 
-* Dynamic Time Warping (DTW)
-* Hierarchical clustering
-* Ward linkage
-* distance matrix 기반 클러스터링
+* 패널 전체가 공유하는 **공통 요인 추출**
+* 개별 구의 변동 중 공통 요인으로 설명되는 **분산 비중 산출**
+* 추출된 공통 요인의 **주기·변곡점(변화점) 분석**
+* 지역별 고유(idiosyncratic) 충격과 구분하여 **집단적 시장 사이클 구조 파악**
 
-## 4.3 핵심 코드 (`dtw_clustering.py`)
-
-```
-for i, gu_i in enumerate(gus):
-    for j, gu_j in enumerate(gus):
-        dist = dtw(gu_series[gu_i], gu_series[gu_j]).distance
-        D[i, j] = dist
-```
-
-클러스터링:
-
-```
-Z = linkage(D_condensed, method="ward")
-clusters = fcluster(Z, k, criterion="maxclust")
-```
-
-## 4.4 해석
-
-* 클러스터 구조를 통해 강남권·도심권·외곽권의 구조적 차이가 드러난다.
-* 이는 DFM에서 나타난 factor loading과 결합해 지역별 특성을 더 입체적으로 해석하는 데 사용한다.
+DFM은 상태공간(State-Space) 구조로 구성되어 요인의 동적 구조(factor order)를 포함할 수 있으며, 단순 PCA보다 시간적 패턴을 더 잘 설명한다는 장점이 있다.
 
 ---
 
-# 📌 Methodology 전체 요약 흐름
+### **(2) 요인 수 결정 (`dfm_select_factors.py`)**
 
-1. **구별 사이클 탐지**
-   → 지역 고유의 변동 패턴을 먼저 파악
-2. **패널 분석 시도**
-   → 회귀로 설명 가능한가? → 한계 확인
-3. **Dynamic Factor Model**
-   → 공통 요인 추출 & 구조적 사이클 도출
-4. **DTW 클러스터링**
-   → 각 지역의 패턴을 그룹화하여 구조적 차이 파악
+#### **- 데이터 입력**
+
+DFM은 구별 표준화 실질가격을 wide matrix 형태(T×N)로 입력받는다.
+
+```python
+df_wide = pd.read_csv("data/panel_wide_matrix.csv", index_col=0)
+df_wide.index = pd.to_datetime(df_wide.index)
+```
+
+#### **- Grid Search 기반 모형 선택 절차**
+
+코드는 최대 요인 수 5개, factor order=1~2 범위에서 AIC/BIC 비교를 위한 그리드 탐색을 포함하고 있다.
+
+핵심 구조는 다음과 같다.
+
+```python
+model = DynamicFactor(
+    df_wide,
+    k_factors=k,
+    factor_order=p,
+    error_order=0
+)
+res = model.fit(maxiter=300, disp=False)
+results.append((k, p, res.aic, res.bic))
+```
+
+#### **- 최종 선택된 모형**
+
+코드에서는 사전 탐색 결과에 기반해 다음 조합을 채택한다.
+
+* **k = 1 (공통 요인 1개)**
+* **p = 2 (factor AR order 2)**
+
+
+이는 전체 주택시장 움직임이 단일 주기 구조로 충분히 설명된다는 경험적 결과에 부합한다.
+
+---
+
+### **(3) 공통 요인 추출 (`dfm_common_factor_cycle.py`)**
+
+#### **- 최종 DFM 적합**
+
+```python
+final_model = DynamicFactor(
+    df_wide,
+    k_factors=best_k,
+    factor_order=best_p,
+    error_order=0
+)
+final_res = final_model.fit(maxiter=300, disp=False)
+```
+
+#### **1) 필터링된 공통 요인 시계열 저장**
+
+```python
+factors = pd.DataFrame(
+    final_res.factors.filtered.T,
+    index=df_wide.index,
+    columns=[f"Factor{i+1}" for i in range(k)]
+)
+factors.to_csv("data/dfm_common_factors.csv")
+```
+
+#### **2) 개별 구 로딩(loadings) 추출**
+
+```python
+params = np.asarray(final_res.params)
+loadings = params[:N * k].reshape(N, k)
+```
+
+#### **3) 전체 공통 구성 요소 재구성**
+
+```python
+common_part = factors.values @ loadings.T
+```
+
+#### **4) 고유(idiosyncratic) 구성 요소 분리**
+
+```python
+idiosync = df_wide.values - common_part
+idiosync_df = pd.DataFrame(idiosync, index=df_wide.index, columns=df_wide.columns)
+idiosync_df.to_csv("data/dfm_idiosyncratic_components.csv")
+```
+
+#### **5) 공통 요인의 사이클 분석 절차**
+
+공통 요인 Factor1에 대해 다음 절차로 시장 사이클을 분석했다.
+
+##### **(a) STL 분해**
+
+```python
+stl = STL(series, period=12)
+res = stl.fit()
+trend = res.trend
+seasonal = res.seasonal
+```
+
+##### **(b) HP 필터 기반 cycle 분리**
+
+```python
+cycle, trend_hp = hpfilter(values, lamb=129600)
+```
+
+##### **(c) FFT 기반 주기 탐색**
+
+실제 코드 추출:
+
+```python
+fft_result = np.fft.fft(cycle)
+freqs = np.fft.fftfreq(N)
+
+Pxx = np.abs(fft_result[1:N//2])**2
+top_idx = np.argmax(Pxx) + 1
+dominant_period = 1 / freqs[top_idx]
+m = int(round(dominant_period))
+```
+
+이 과정을 통해 **m개월 단위의 주요 시장 주기**를 도출한다.
+
+##### **(d) Welch 검증으로 주기 안정성 점검**
+
+```python
+freqs_w, psd_w = welch(values, nperseg=nperseg)
+```
+
+##### **(e) Ruptures 변화점 탐지**
+
+```python
+algo = rpt.Binseg(model="rbf").fit(values)
+change_points = algo.predict(n_bkps=optimal_k)
+change_dates = series.index[np.array(change_points[:-1]) - 1]
+```
+
+---
+
+### **(4) 요인 해석**
+
+추출된 **Factor1**은 다음 특징을 갖는 전국적 공통 움직임을 나타낸다.
+
+#### **① 시장 전체의 방향과 주기**
+
+* HP 필터와 FFT 분석 결과, 특정 개월 수(m개월) 단위의 반복적 상승·하락 구조가 관찰됨
+* 웰치 스펙트럼 기반으로 주요 주기의 안정성을 추가 검증함
+* 이는 금리 변화, 유동성, 경기 변동 등 거시충격이 서울 전체 주택시장에 미치는 **동조적 사이클**을 반영
+
+#### **② STL Trend를 통한 장기 구조**
+
+* STL trend는 비주기적 장기 상승·하락 흐름(예: 장기적 완만한 하락 → 반등 국면 등)을 비교적 매끄럽게 보여줌
+* FFT 기반 cycle과 대비하여 장기·단기 구조를 분리하여 해석 가능
+
+#### **③ 변화점 분석을 통한 국면 전환 탐지**
+
+* Ruptures 변화점 탐지에서 도출된 날짜는 시장 회복 또는 급변 시점과 일관된 패턴
+* 변화점은 **사이클의 국면 전환점(peak/trough 사이의 변곡구간)**으로 해석 가능
+
+#### **④ 지역별 영향도 분리(Loadings)**
+
+* 로딩 행렬(loadings)을 통해 각 구가 공통 요인에 얼마나 민감하게 반응하는지 확인
+* 로딩이 큰 지역일수록 시장 전체의 국면 변화에 높은 민감도를 보임
+* idiosyncratic component를 통해 지역별 고유 패턴을 명확히 분리할 수 있게 됨
+
+---
+
+## **4.4. DTW 기반 구별 패턴 클러스터링**
+
+### **(1) 목적**
+
+동일한 기간 동안 서울 25개구의 아파트 매매가격 시계열이 **어떤 구조적 패턴을 공유하는지** 확인하기 위해 계층적 클러스터링을 수행하였다.
+특히 일반적인 유클리드 거리보다 **시계열 형태의 변화 양상(위상 차이, 시간축 이동 등)** 을 더 잘 반영하는 **Dynamic Time Warping(DTW)** 거리를 사용하여,
+  - 원시 시계열(panel),
+  - DFM 기반 특이 성분(idiosyncratic component),
+  - HP-filter cycle
+
+세 가지 관점에서 구별 유사도를 비교하였다.
+
+이 분석을 통해,
+
+* 구별 장기적 흐름(Trend)과
+* 국지적 순환(Cycle),
+* 지역 고유 충격(Idiosyncratic)에 대한
+  **구조적 패턴 그룹**을 확인하는 것이 목적이다.
+
+---
+
+### **(2) 알고리즘**
+
+#### **- Robust Scaling**
+
+각 구의 시계열 수준 차이(평균, 분산)가 클러스터링에 과도하게 영향을 주지 않도록,
+**중앙값(median)과 IQR 기반 스케일링**을 적용하였다.
+
+[
+x' = \frac{x - \tilde{x}}{\mathrm{IQR}(x)}
+]
+
+이 처리는 강남·송파처럼 가격 수준이 높은 지역과 금천·중랑처럼 낮은 지역 간의 스케일 차이를 제거하여 **형태(pattern)만 비교**할 수 있게 한다.
+
+---
+
+#### **- DTW Distance Matrix 생성**
+
+`tslearn.metrics.cdist_dtw` 를 이용해
+각 구 시계열 간 DTW 거리를 계산하였다.
+
+* DTW는 시점이 조금씩 비틀린 시계열(예: 상승 시기 차이)을 유클리드 거리보다 잘 측정
+* 계산된 거리행렬은 **정규화(max scaling)** 하여 클러스터링 안정성을 높임
+
+거리행렬은
+
+* Panel
+* Idiosyncratic
+* HP-cycle
+  각각에 대해 독립적으로 생성하였다.
+
+---
+
+#### **- Hierarchical Clustering + Silhouette 기반 최적 k 선택**
+
+클러스터 구조는 계층적 클러스터링(average linkage)을 사용하였다.
+
+[
+Z = \text{linkage}(D_{\text{DTW}},\ \mathrm{method}="average")
+]
+
+k=2~9까지 반복하며 실루엣 점수(silhouette score)를 계산하여
+**최적 클러스터 개수(best k)** 를 선택하였다.
+
+각 방법(panel, idio, hp)마다 서로 다른 k가 선택될 수 있으며,
+이는 동일한 지역군이라도 보는 관점에 따라 **패턴의 해석이 달라짐**을 의미한다.
+
+---
+
+### **(3) 핵심 코드 (`dtw_clustering.py`)**
+
+#### **- Robust scaling**
+
+```python
+def robust_scale_per_series(X):
+    Xs = np.zeros_like(X, dtype=float)
+    for i in range(X.shape[0]):
+        row = X[i].astype(float)
+        med = np.nanmedian(row)
+        q25 = np.nanpercentile(row, 25)
+        q75 = np.nanpercentile(row, 75)
+        iqr = q75 - q25
+        if (iqr == 0) or np.isnan(iqr):
+            s = np.std(row)
+            if s == 0 or np.isnan(s):
+                s = 1.0
+            iqr = s
+        Xs[i] = (row - med) / iqr
+    return Xs
+```
+
+---
+
+#### **- DTW 거리행렬 계산**
+
+```python
+def compute_dtw_distance_matrix_from_df(df, desc="DTW"):
+    X = df.T.values
+    Xs = robust_scale_per_series(X)
+
+    print(f"{desc}: computing DTW (tslearn.cdist_dtw) ...")
+    D = cdist_dtw(Xs)        # DTW distance
+    D = np.nan_to_num(D)
+    
+    maxv = D.max()
+    if maxv > 0:
+        D = D / maxv        # normalization
+    return D
+```
+
+---
+
+#### **- 계층 클러스터링 및 silhouette 평가**
+
+```python
+def hierarchical_labels_from_distance(D, k, method="average"):
+    condensed = squareform(D, checks=True)
+    Z = linkage(condensed, method=method)
+    labels = fcluster(Z, k, criterion="maxclust")
+    return labels, Z
+```
+
+Main loop:
+
+```python
+for mname, D in methods.items():
+    best_sil = -999
+    best_k = None
+    for k in K_RANGE:
+        labels, Z = hierarchical_labels_from_distance(D, k=k)
+        sil = silhouette_precomputed_safe(D, labels)
+        if sil > best_sil:
+            best_sil = sil
+            best_k = k
+            best_labels = labels
+            best_Z = Z
+
+    df_k = pd.DataFrame(rows)
+    df_k.to_csv(f"Output/{mname}_k_search.csv")
+```
+---
+
+### **(4) 해석**
+
+#### **- Panel 기준**
+
+패널 원시 시계열 기준의 DTW 구조는
+상승·하락의 **전체 흐름이 유사한 지역군**을 묶는다.
+
+예)
+
+* “강남–서초–송파–강서–마포–서대문” 군
+* “노원–성북” 군
+* “강동–동대문–동작” 군 등
+
+이는 **가격 수준 + 장기 흐름**이 동시에 반영된 결과로,
+주요 상권·직주근접 형태가 반영되었다.
+
+---
+
+#### **- Idiosyncratic 기준**
+
+DFM 특이성분은 각 구의 **고유 충격·단기 모멘텀**을 반영하므로
+클러스터는 더 “지역적 특성”에 가까워진다.
+
+예)
+
+* 강남·서초·송파·양천처럼 **동조적 단기 모멘텀**
+* 노원·도봉·성북 등 **북부권 단기 변동 그룹**
+
+이는 “트렌드 제거 후 남는 지역 고유 패턴”을 기준으로
+구별 특성을 파악하는 데 유효하다.
+
+---
+
+#### **- HP-cycle 기준**
+
+HP-filter cycle은 **순환 성분**(약 2~4년 템포)을 기준으로 묶기 때문에
+단기 상승/하락의 타이밍이 비슷한 지역군을 잘 드러낸다.
+
+예)
+
+* 강남·서초·송파·양천
+* 노원·도봉·성북·은평
+* 강서·마포
+
+이는 **경기 민감도·정책 반응도** 등을 반영한다.
+
+---
+
+#### **- 종합 해석**
+
+세 기준에서 반복적으로 나타나는 핵심 패턴:
+
+* **강남·서초·송파(양천 포함)**
+  → 동조성이 가장 높은 대표적 고가권 클러스터
+* **노원·성북·도봉(은평 포함)**
+  → 북부권 특유의 동행성과 모멘텀 패턴
+* **강서·마포**
+  → 서부권 빠른 순환 구조
+* 일부 구는 일관적으로 **단독 행동**을 보임
+  (종로, 영등포, 강북, 금천 등)
+
+이 결과는 **구간별, 가격대별 시장 구조적 동조성**을 보여주는 근거가 되며
+이후 상위 분석(변화점 분석, 시계열 segmentation 등)에도 활용 가능하다.
 
