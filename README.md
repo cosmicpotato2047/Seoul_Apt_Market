@@ -17,15 +17,9 @@
 - [8. Appendix](#8-appendix)
   - [A. 25개 구 분석](#a-25개-구-분석)
   - [B. PanelOLS Full Output Entity FE + Time FE](#b-panelols-full-output-entity-fe--time-fe)
+- License
+- Open Source Notice
 
-
----
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
-
-## Open Source Notice
-This project uses open-source Python libraries.
-All dependencies are listed in the source code imports.
 ---
 
 # **1. Introduction**
@@ -2889,4 +2883,11 @@ Distribution: F(259,5639)
 Included effects: Entity, Time
 ```
 
+---
+## License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+## Open Source Notice
+This project uses open-source Python libraries.
+All dependencies are listed in the source code imports.
 ---
