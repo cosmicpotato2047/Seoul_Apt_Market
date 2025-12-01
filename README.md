@@ -2887,7 +2887,7 @@ Included effects: Entity, Time
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details.
 
-## Open Source Notice
+## Open Source Notice  
 This project uses open-source Python libraries.
 All dependencies are listed in the source code imports.
 ---
